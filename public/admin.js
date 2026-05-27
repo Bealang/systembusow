@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let allPrices = [];
     let allFaqs = [];
     let editingFaqId = null;
+    let isMonthlyManuallyEdited = false;
+    let isMonthlyDiscountManuallyEdited = false;
 
     // Initialize Quill Editor
     var quill = new Quill('#news-editor', {
@@ -98,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('admin-panel').style.display = 'none';
             }
         } catch (e) {
-            console.error("Auth check failed", e);
+            console.error("Nie zalogowano", e);
         }
     }
 
@@ -110,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 fullScheduleData = { myslenice: { workdays: [], saturday: [], sunday: [] }, sulkowice: { workdays: [], saturday: [], sunday: [] } };
             }
         } catch (e) {
-            console.error(e);
+            console.error("Nie wczytano rozkładu jazdy:",e);
         }
     }
 
@@ -138,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 alertEl.className = 'alert error';
             }
         } catch (err) {
-            console.error(err);
+            console.error("Blad logowania", err);
         }
     });
 
@@ -355,6 +357,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await res.json();
             if (res.ok) {
+                localStorage.removeItem('mleczek_schedule');
                 showStatus(data.message, 'success');
             } else {
                 showStatus(data.error || 'Błąd', 'error');
@@ -595,6 +598,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ orders })
             });
             if (res.ok) {
+                localStorage.removeItem('mleczek_stops');
+                localStorage.removeItem('mleczek_pricing');
                 showStatus('Kolejność przystanków została zapisana.', 'success');
                 // Refresh local data to match server sort
                 const data = await fetch('/api/pricing-data').then(r => r.json());
@@ -622,6 +627,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (res.ok) {
                 allStops = data.stops;
+                localStorage.removeItem('mleczek_stops');
+                localStorage.removeItem('mleczek_pricing');
                 showStatus('Nazwa przystanku została zaktualizowana.', 'success');
                 renderStopsList();
                 populatePriceDropdowns();
@@ -641,6 +648,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (res.ok) {
                 const data = await res.json();
                 allStops = data.stops;
+                localStorage.removeItem('mleczek_stops');
+                localStorage.removeItem('mleczek_pricing');
                 showStatus('Przystanek usunięty pomyślnie.', 'success');
                 loadPricingData(); // Reload everything to refresh prices
             } else {
@@ -668,6 +677,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (res.ok) {
                 allStops = data.stops;
+                localStorage.removeItem('mleczek_stops');
+                localStorage.removeItem('mleczek_pricing');
                 document.getElementById('new-stop-name').value = '';
                 showStatus(`Przystanek "${name}" został dodany.`, 'success');
                 loadPricingData();
@@ -701,6 +712,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updatePriceForm() {
+        isMonthlyManuallyEdited = false;
+        isMonthlyDiscountManuallyEdited = false;
+
         const id1 = parseInt(document.getElementById('price-stop-a').value);
         const selectB = document.getElementById('price-stop-b');
         const id2 = parseInt(selectB.value);
@@ -769,13 +783,60 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('price-stop-a').addEventListener('change', updatePriceForm);
     document.getElementById('price-stop-b').addEventListener('change', updatePriceForm);
 
-    // Auto-calculate discount (-49%)
-    document.getElementById('price-m').addEventListener('input', (e) => {
+    // Auto-calculate monthly based on single price:
+    // Bilet miesięczny = 2 * Bilet jednorazowy * 20
+    // Bilet miesięczny ulgowy = Bilet miesięczny - 49%
+    document.getElementById('price-s').addEventListener('input', (e) => {
         const val = parseFloat(e.target.value);
         if (!isNaN(val)) {
-            // Ulgowy to -49% czyli 51% ceny podstawowej
-            const discounted = (val * 0.51).toFixed(2);
-            document.getElementById('price-md').value = discounted;
+            const priceM = val * 2 * 20;
+            if (!isMonthlyManuallyEdited) {
+                document.getElementById('price-m').value = priceM.toFixed(2);
+            }
+            if (!isMonthlyDiscountManuallyEdited) {
+                const currentPriceM = !isMonthlyManuallyEdited ? priceM : parseFloat(document.getElementById('price-m').value);
+                if (!isNaN(currentPriceM)) {
+                    document.getElementById('price-md').value = (currentPriceM * 0.51).toFixed(2);
+                } else {
+                    document.getElementById('price-md').value = '';
+                }
+            }
+        } else {
+            if (!isMonthlyManuallyEdited) {
+                document.getElementById('price-m').value = '';
+            }
+            if (!isMonthlyDiscountManuallyEdited) {
+                document.getElementById('price-md').value = '';
+            }
+        }
+    });
+
+    // Auto-calculate discount (-49%)
+    document.getElementById('price-m').addEventListener('input', (e) => {
+        if (e.target.value.trim() === '') {
+            isMonthlyManuallyEdited = false;
+        } else {
+            isMonthlyManuallyEdited = true;
+        }
+        const val = parseFloat(e.target.value);
+        if (!isNaN(val)) {
+            if (!isMonthlyDiscountManuallyEdited) {
+                // Ulgowy to -49% czyli 51% ceny podstawowej
+                const discounted = (val * 0.51).toFixed(2);
+                document.getElementById('price-md').value = discounted;
+            }
+        } else {
+            if (!isMonthlyDiscountManuallyEdited) {
+                document.getElementById('price-md').value = '';
+            }
+        }
+    });
+
+    document.getElementById('price-md').addEventListener('input', (e) => {
+        if (e.target.value.trim() === '') {
+            isMonthlyDiscountManuallyEdited = false;
+        } else {
+            isMonthlyDiscountManuallyEdited = true;
         }
     });
 
@@ -805,6 +866,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (res.ok) {
                 allPrices = data.prices;
+                localStorage.removeItem('mleczek_pricing');
                 showStatus('Cena relacji została pomyślnie zapisana.', 'success');
                 updatePriceForm();
             } else {
@@ -850,6 +912,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (res.ok) {
                 allPrices = data.prices;
+                localStorage.removeItem('mleczek_pricing');
                 showStatus(data.message, 'success');
                 updatePriceForm();
                 document.getElementById('bulk-price-amount').value = '';
@@ -859,6 +922,30 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {
             showStatus(`Błąd podczas masowej zmiany cen: ${e.message}`, 'error');
             console.error("Bulk price save error:", e);
+        }
+    });
+
+    document.getElementById('recalculate-monthly-btn').addEventListener('click', async () => {
+        if (!confirm('Czy na pewno chcesz przeliczyć i zaktualizować ceny biletów miesięcznych normalnych i ulgowych dla WSZYSTKICH relacji na podstawie cen jednorazowych? Ta operacja nadpisze obecne ceny miesięczne.')) {
+            return;
+        }
+        try {
+            const res = await fetch('/api/admin/pricing/recalculate-monthly', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                allPrices = data.prices;
+                localStorage.removeItem('mleczek_pricing');
+                showStatus(data.message, 'success');
+                updatePriceForm();
+            } else {
+                showStatus(data.error || 'Błąd podczas przeliczania biletów.', 'error');
+            }
+        } catch (e) {
+            showStatus('Błąd połączenia podczas przeliczania biletów.', 'error');
+            console.error("Recalculate monthly error:", e);
         }
     });
 
@@ -920,6 +1007,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ orders })
                     });
+                    localStorage.removeItem('mleczek_faq');
                     showStatus('Kolejność FAQ została zapisana.', 'success');
                 } catch (e) {
                     showStatus('Błąd połączenia przy zapisywaniu kolejności FAQ.', 'error');
@@ -947,6 +1035,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (res.ok) {
                 allFaqs = data.faqs;
+                localStorage.removeItem('mleczek_faq');
                 showStatus(editingFaqId ? 'Pytanie FAQ zostało zaktualizowane.' : 'Nowe pytanie FAQ zostało dodane.', 'success');
                 resetFaqForm();
                 renderFaqList();
@@ -998,6 +1087,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (res.ok) {
                 allFaqs = data.faqs;
+                localStorage.removeItem('mleczek_faq');
                 showStatus('Pytanie FAQ zostało usunięte.', 'success');
                 renderFaqList();
             }

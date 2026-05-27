@@ -1,51 +1,4 @@
-<!DOCTYPE html>
-<html lang="pl">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mleczek Bus - Cennik</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
-        rel="stylesheet" media="print" onload="this.media='all'">
-    <link rel="preload" href="style.css" as="style">
-    <link rel="stylesheet" href="style.css">
-</head>
-
-<body>
-    <!-- Navbar -->
-    <nav class="navbar">
-        <div class="container nav-container">
-            <div class="logo">
-                <a href="/index.html" style="text-decoration: none;">
-                    <div class="logo-text">MLECZEK<span>BUS</span></div>
-                </a>
-            </div>
-
-            <button class="hamburger" id="hamburger-btn" aria-label="Menu">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-
-            <div class="nav-links" id="nav-links">
-                <a href="/index.html#rozklad">Rozkład</a>
-                <a href="/cennik.html" class="active">Cennik</a>
-                <a href="/index.html#aktualnosci">Aktualności</a>
-                <a href="regulamin.pdf" target="_blank">Regulamin</a>
-                <a href="/kontakt.html">Kontakt</a>
-                <a href="https://www.facebook.com/BUS.MLECZEK" target="_blank" aria-label="Facebook"
-                    style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 50%;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
-                        fill="currentColor">
-                        <path
-                            d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                    </svg>
-                </a>
-            </div>
-        </div>
-    </nav>
+<%- include('partials/header') %>
 
     <main class="main-content" style="min-height: 70vh;">
         <!-- Pricing Section -->
@@ -114,7 +67,7 @@
                                 </svg>
                             </div>
                             <div class="card-info">
-                                <h4>Bilet Jednorazowy</h4>
+                                <h4>Bilet jednorazowy</h4>
                                 <div class="price" id="price-single">-- zł</div>
                             </div>
                         </div>
@@ -136,7 +89,7 @@
                                 </svg>
                             </div>
                             <div class="card-info">
-                                <h4 id="monthly-label">Miesięczny Normalny</h4>
+                                <h4 id="monthly-label">Miesięczny normalny</h4>
                                 <div class="price" id="price-monthly">-- zł</div>
                             </div>
                         </div>
@@ -175,45 +128,6 @@
         </section>
     </main>
 
-    <!-- Professional Footer -->
-    <footer class="footer" id="kontakt">
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-brand">
-                    <h2>MLECZEK<span>BUS</span></h2>
-                    <p>Firma transportowa realizująca kursy na trasie Sułkowice - Rudnik - Myślenice od wielu lat.</p>
-                </div>
-                <div class="footer-links">
-                    <h3>Na skróty</h3>
-                    <ul>
-                        <li><a href="/index.html#rozklad">Rozkład Jazdy</a></li>
-                        <li><a href="/cennik.html">Cennik</a></li>
-                        <li><a href="/index.html#aktualnosci">Aktualności</a></li>
-                        <li><a href="/index.html#faq">FAQ</a></li>
-                        <li><a href="regulamin.pdf" target="_blank">Regulamin</a></li>
-                        <li><a href="/kontakt.html">Kontakt</a></li>
-                        <li><a href="/prywatnosc.html">Polityka Prywatności</a></li>
-                        <li><a href="/admin.html">Panel Administratora</a></li>
-                    </ul>
-                </div>
-                <div class="footer-contact">
-                    <h3>Kontakt</h3>
-                    <p>Masz pytania? Skontaktuj się z nami po więcej informacji.</p>
-                    <p><strong>Telefon:</strong> <a href="tel:+48501456327"
-                            style="color: var(--accent-color); text-decoration: none; font-weight: 700; font-size: 1.2rem;">501
-                            456 327</a></p>
-                </div>
-            </div>
-            <div class="footer-bottom">
-                <p>Copyright &copy; <span id="current-year"></span> F.T.H.U. Pedro</p>
-                <p style="text-transform: uppercase;">DESIGN BY <a
-                        href="https://web2sell.pl" target="_blank"
-                        style="color: var(--accent-color); text-decoration: none;">WEB2SELL.PL</a></p>
-            </div>
-        </div>
-    </footer>
+    <script src="/calculator.js" defer></script>
 
-    <script src="script.js" defer></script>
-</body>
-
-</html>
+<%- include('partials/footer') %>

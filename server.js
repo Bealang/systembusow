@@ -45,6 +45,10 @@ app.use(session({
     }
 }));
 
+// Configure EJS View Engine
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
 // Static files (frontend) with caching
 const staticOptions = {
     maxAge: '1y',
@@ -57,38 +61,90 @@ const staticOptions = {
     }
 };
 
+// Middleware to redirect old .html URLs to clean URLs
+app.use((req, res, next) => {
+    if (req.path.endsWith('.html')) {
+        const cleanPath = req.path.slice(0, -5);
+        return res.redirect(301, cleanPath);
+    }
+    next();
+});
+
+// Middleware to prevent caching on all API endpoints at the HTTP level
+app.use('/api', (req, res, next) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+});
+
 app.use(express.static('public', staticOptions));
 app.use('/uploads', express.static('uploads', staticOptions));
 
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'public/') // Save directly to public dir to overwrite rozklad.png
-    },
-    filename: function (req, file, cb) {
-        cb(null, 'rozklad.png') // Always name it rozklad.png
-    }
+// Redirect /index to root / for clean URLs
+app.get('/index', (req, res) => {
+    res.redirect(301, '/');
 });
+
+// --- Page Render Routes ---
+app.get('/', (req, res) => {
+    res.render('index', {
+        title: 'Mleczek Bus - Busy Sułkowice, Rudnik, Myślenice | Rozkład Jazdy',
+        description: 'Szukasz busa? Mleczek Bus oferuje regularne przewozy pasażerskie na trasie Myślenice - Sułkowice - Rudnik - Jawornik - Harbutowice. Sprawdź aktualny rozkład jazdy online!',
+        keywords: 'Busy Sułkowice, Busy Rudnik, Busy Myślenice, Mleczekbus trasa, rozkład jazdy Myślenice Sułkowice, busy Harbutowice Myślenice',
+        activePage: 'home',
+        isHome: true
+    });
+});
+
+app.get('/cennik', (req, res) => {
+    res.render('cennik', {
+        title: 'Mleczek Bus - Cennik',
+        description: 'Sprawdź ceny biletów jednorazowych oraz miesięcznych dla wszystkich połączeń na trasie Myślenice - Sułkowice.',
+        keywords: 'cennik busy, ceny biletów Myślenice Sułkowice, bilet miesięczny Mleczek Bus',
+        activePage: 'cennik',
+        isHome: false
+    });
+});
+
+app.get('/kontakt', (req, res) => {
+    res.render('kontakt', {
+        title: 'Mleczek Bus - Kontakt',
+        description: 'Skontaktuj się z firmą transportową Mleczek Bus. Dane firmy Pedro Piotr Mleczek, NIP, adres i numer telefonu.',
+        keywords: 'kontakt Mleczek Bus, telefon Mleczek Bus, Piotr Mleczek Pedro',
+        activePage: 'kontakt',
+        isHome: false
+    });
+});
+
+app.get('/prywatnosc', (req, res) => {
+    res.render('prywatnosc', {
+        title: 'Mleczek Bus - Polityka Prywatności',
+        description: 'Polityka prywatności serwisu Mleczek Bus. Dowiedz się, jak dbamy o Twoje dane.',
+        keywords: '',
+        activePage: 'prywatnosc',
+        isHome: false
+    });
+});
+
+app.get('/admin', (req, res) => {
+    res.render('admin');
+});
+
 const upload = multer({
-    storage: storage,
+    storage: multer.memoryStorage(),
     fileFilter: (req, file, cb) => {
-        if (file.mimetype === "image/png") {
+        const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/avif"];
+        if (allowedTypes.includes(file.mimetype)) {
             cb(null, true);
         } else {
-            cb(new Error('Tylko pliki PNG są dozwolone!'), false);
+            cb(new Error('Tylko pliki PNG, JPEG, JPG, WEBP oraz AVIF są dozwolone!'), false);
         }
     }
 });
 
-const pdfStorage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, 'public/')
-    },
-    filename: function (req, file, cb) {
-        cb(null, 'regulamin.pdf')
-    }
-});
 const uploadPdf = multer({
-    storage: pdfStorage,
+    storage: multer.memoryStorage(),
     fileFilter: (req, file, cb) => {
         if (file.mimetype === "application/pdf") {
             cb(null, true);
@@ -149,20 +205,7 @@ try {
     }
 }
 
-// Migration: Initial FAQ data
-const faqCount = db.prepare("SELECT COUNT(*) as count FROM faq").get().count;
-if (faqCount === 0) {
-    const initialFaqs = [
-        ["Gdzie zatrzymują się busy Mleczek Bus w Myślenicach?", "Nasze busy odjeżdżają z głównego dworca autobusowego w Myślenicach oraz zatrzymują się na wyznaczonych przystankach na trasie w kierunku Sułkowic."],
-        ["Jakie miejscowości obsługuje Mleczek Bus?", "Obsługujemy regularną linię na trasie: Harbutowice - Sułkowice - Rudnik - Jawornik - Myślenice. Przejeżdżamy również przez Rudnik Dolny (kursy oznaczone RD)."],
-        ["Gdzie i kiedy można kupić bilety miesięczne?", "Bilety miesięczne są sprzedawane w wyznaczonych dniach <strong>za dworcem Dekada w Myślenicach</strong>. Dokładna data sprzedaży jest zawsze podawana na naszej stronie oraz w busach z odpowiednim wyprzedzeniem przed końcem każdego miesiąca."],
-        ["Czy rozkład jazdy busów jest aktualny?", "Tak, na naszej stronie internetowej zawsze znajdziesz aktualny rozkład jazdy. Najbliższe odjazdy są aktualizowane w czasie rzeczywistym."],
-        ["Ile kosztuje bilet na trasie Sułkowice - Myślenice?", "Szczegółowe ceny biletów jednorazowych oraz miesięcznych znajdziesz w zakładce <a href='/cennik.html'>Cennik</a>."]
-    ];
-    const insertFaq = db.prepare("INSERT INTO faq (question, answer, sort_order) VALUES (?, ?, ?)");
-    initialFaqs.forEach((f, index) => insertFaq.run(f[0], f[1], index));
-    console.log("Zainicjowano domyślne dane FAQ w bazie.");
-}
+
 
 // Rate limiting for login
 const loginLimiter = rateLimit({
@@ -301,13 +344,52 @@ app.post('/api/admin/schedule', requireAuth, (req, res) => {
     }
 });
 
+// Route to dynamically serve the current schedule image, regardless of extension
+app.get('/rozklad-current', (req, res) => {
+    const publicDir = path.join(__dirname, 'public');
+    try {
+        const files = fs.readdirSync(publicDir);
+        const rozkladFile = files.find(file => file.startsWith('rozklad.'));
+        if (rozkladFile) {
+            return res.sendFile(path.join(publicDir, rozkladFile));
+        }
+    } catch (e) {
+        console.error("Błąd pobierania rozkładu:", e);
+    }
+    res.status(404).send('Nie znaleziono pliku rozkładu.');
+});
+
 // Upload schedule image
 app.post('/api/admin/upload-image', requireAuth, upload.single('rozklad_image'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ error: 'Nie wybrano pliku.' });
     }
-    // file is saved as public/rozklad.png
-    res.json({ success: true, message: 'Plik graficzny rozkładu został zaktualizowany.' });
+
+    try {
+        const ext = path.extname(req.file.originalname).toLowerCase() || '.png';
+        const publicDir = path.join(__dirname, 'public');
+
+        // Delete any existing rozklad.* files to prevent duplicates
+        const existingFiles = fs.readdirSync(publicDir);
+        existingFiles.forEach(file => {
+            if (file.startsWith('rozklad.')) {
+                try {
+                    fs.unlinkSync(path.join(publicDir, file));
+                } catch (err) {
+                    console.error("Błąd usuwania starego pliku rozkładu:", err);
+                }
+            }
+        });
+
+        // Save the new file
+        const newFileName = `rozklad${ext}`;
+        fs.writeFileSync(path.join(publicDir, newFileName), req.file.buffer);
+
+        res.json({ success: true, message: `Plik rozkładu (${newFileName}) został pomyślnie zaktualizowany.` });
+    } catch (error) {
+        console.error("Błąd podczas wgrywania rozkładu:", error);
+        res.status(500).json({ error: 'Wystąpił krytyczny błąd zapisu pliku na serwerze.' });
+    }
 });
 
 // Upload rules PDF
@@ -315,7 +397,19 @@ app.post('/api/admin/upload-regulamin', requireAuth, uploadPdf.single('regulamin
     if (!req.file) {
         return res.status(400).json({ error: 'Nie wybrano pliku regulaminu.' });
     }
-    res.json({ success: true, message: 'Plik regulaminu został wgrany i zastąpił poprzedni.' });
+
+    try {
+        const publicDir = path.join(__dirname, 'public');
+        const filePath = path.join(publicDir, 'regulamin.pdf');
+
+        // Write the PDF file, replacing any existing one
+        fs.writeFileSync(filePath, req.file.buffer);
+
+        res.json({ success: true, message: 'Plik regulaminu (.pdf) został pomyślnie wgrany i zastąpił poprzedni.' });
+    } catch (error) {
+        console.error("Błąd podczas wgrywania regulaminu:", error);
+        res.status(500).json({ error: 'Wystąpił krytyczny błąd zapisu pliku regulaminu na serwerze (plik może być zablokowany).' });
+    }
 });
 
 // Manage news
@@ -464,11 +558,11 @@ app.post('/api/admin/pricing', requireAuth, (req, res) => {
 
 app.post('/api/admin/pricing/bulk', requireAuth, (req, res) => {
     const { type, amount } = req.body;
-    
+
     if (!['s', 'm', 'md'].includes(type)) {
         return res.status(400).json({ error: 'Nieprawidłowy typ biletu.' });
     }
-    
+
     const parsedAmount = parseFloat(amount);
     if (isNaN(parsedAmount) || parsedAmount === 0) {
         return res.status(400).json({ error: 'Nieprawidłowa kwota.' });
@@ -496,6 +590,23 @@ app.post('/api/admin/pricing/bulk', requireAuth, (req, res) => {
     } catch (error) {
         console.error("Błąd bazy danych (admin-pricing-bulk):", error);
         res.status(500).json({ error: 'Błąd podczas masowej zmiany cen.' });
+    }
+});
+
+app.post('/api/admin/pricing/recalculate-monthly', requireAuth, (req, res) => {
+    try {
+        db.prepare(`
+            UPDATE pricing 
+            SET price_m = ROUND(price_s * 40, 2),
+                price_md = ROUND(price_s * 40 * 0.51, 2)
+            WHERE price_s IS NOT NULL AND price_s > 0
+        `).run();
+
+        const prices = db.prepare('SELECT * FROM pricing').all();
+        res.json({ success: true, message: 'Pomyślnie przeliczono ceny biletów miesięcznych dla wszystkich relacji.', prices });
+    } catch (error) {
+        console.error("Błąd bazy danych (recalculate-monthly):", error);
+        res.status(500).json({ error: 'Błąd podczas przeliczania biletów miesięcznych.' });
     }
 });
 
@@ -564,6 +675,17 @@ app.delete('/api/admin/faq/:id', requireAuth, (req, res) => {
         console.error("Błąd bazy danych (admin-faq-delete):", error);
         res.status(500).json({ error: 'Błąd podczas usuwania pytania FAQ.' });
     }
+});
+
+// Generic error handler for Multer or other middleware errors
+app.use((err, req, res, next) => {
+    if (err instanceof multer.MulterError) {
+        return res.status(400).json({ error: `Błąd przesyłania pliku: ${err.message}` });
+    }
+    if (err) {
+        return res.status(400).json({ error: err.message || 'Wystąpił nieznany błąd.' });
+    }
+    next();
 });
 
 app.listen(PORT, () => {

@@ -1,0 +1,193 @@
+// ============================================================================
+// MLECZEK BUS - Schedule & Departures Module (schedule.js)
+// Handles schedule loading, next departures calculation, and full view modal
+// ============================================================================
+
+(function() {
+    let currentScheduleData = null;
+
+    function getDayType(date) {
+        const day = date.getDay();
+        if (day === 0) return 'sunday';
+        if (day === 6) return 'saturday';
+        return 'workdays';
+    }
+
+    function getDayName(date) {
+        const days = ['Niedziela', 'Poniedziałek', 'Wtorek', 'Środa', 'Czwartek', 'Piątek', 'Sobota'];
+        return days[date.getDay()];
+    }
+
+    function formatNotes(notesArray) {
+        if (!notesArray || notesArray.length === 0) return "kurs zwykły";
+
+        return notesArray.map(n => {
+            let span = `<span class="note-badge">${n}</span>`;
+            if (window.NOTE_DESCRIPTIONS && window.NOTE_DESCRIPTIONS[n]) {
+                span += ` <span style="font-size: 0.85em;">(${window.NOTE_DESCRIPTIONS[n]})</span>`;
+            }
+            return span;
+        }).join(", ");
+    }
+
+    function getNextDepartures(citySchedule, currentDate) {
+        if (!citySchedule) return null;
+        let checkDate = new Date(currentDate);
+        let currentMins = window.timeToMinutes(
+            checkDate.getHours().toString().padStart(2, '0') + ':' +
+            checkDate.getMinutes().toString().padStart(2, '0')
+        );
+
+        for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+            let dayType = getDayType(checkDate);
+            let scheduleForDay = citySchedule[dayType];
+
+            if (scheduleForDay && scheduleForDay.length > 0) {
+                for (let i = 0; i < scheduleForDay.length; i++) {
+                    let departure = scheduleForDay[i];
+                    let departureMins = window.timeToMinutes(departure.time);
+
+                    if (dayOffset > 0 || departureMins >= currentMins) {
+                        let nextFollowing = null;
+                        if (i + 1 < scheduleForDay.length) {
+                            nextFollowing = scheduleForDay[i + 1];
+                        } else {
+                            let nextDayDate = new Date(checkDate);
+                            for (let nextOffset = 1; nextOffset < 7; nextOffset++) {
+                                nextDayDate.setDate(nextDayDate.getDate() + 1);
+                                let nextDayType = getDayType(nextDayDate);
+                                if (citySchedule[nextDayType] && citySchedule[nextDayType].length > 0) {
+                                    nextFollowing = citySchedule[nextDayType][0];
+                                    break;
+                                }
+                            }
+                        }
+
+                        return {
+                            next: departure,
+                            following: nextFollowing,
+                            isToday: dayOffset === 0,
+                            dayName: getDayName(checkDate)
+                        };
+                    }
+                }
+            }
+            checkDate.setDate(checkDate.getDate() + 1);
+            currentMins = 0;
+        }
+        return null;
+    }
+
+    function updateDisplays() {
+        if (!currentScheduleData) return;
+
+        const now = new Date();
+
+        // Myślenice Update
+        const mysleniceDeps = getNextDepartures(currentScheduleData.myslenice, now);
+        const mTime = document.getElementById('next-myslenice-time');
+        const mNotes = document.getElementById('next-myslenice-notes');
+        const mFollow = document.getElementById('following-myslenice-info');
+
+        if (mysleniceDeps) {
+            if (mTime) mTime.textContent = mysleniceDeps.next.time;
+            if (mNotes) mNotes.innerHTML = formatNotes(mysleniceDeps.next.notes);
+
+            let subText = "Następny: " + (mysleniceDeps.following ? mysleniceDeps.following.time : "--:--");
+            if (!mysleniceDeps.isToday) {
+                subText = `Najbliższy kurs: ${mysleniceDeps.dayName}`;
+            }
+            if (mFollow) mFollow.textContent = subText;
+        } else {
+            if (mTime) mTime.textContent = "--:--";
+            if (mNotes) mNotes.textContent = "Brak kursów";
+        }
+
+        // Sułkowice Update
+        const sulkowiceDeps = getNextDepartures(currentScheduleData.sulkowice, now);
+        const sTime = document.getElementById('next-sulkowice-time');
+        const sNotes = document.getElementById('next-sulkowice-notes');
+        const sFollow = document.getElementById('following-sulkowice-info');
+
+        if (sulkowiceDeps) {
+            if (sTime) sTime.textContent = sulkowiceDeps.next.time;
+            if (sNotes) sNotes.innerHTML = formatNotes(sulkowiceDeps.next.notes);
+
+            let subText = "Następny: " + (sulkowiceDeps.following ? sulkowiceDeps.following.time : "--:--");
+            if (!sulkowiceDeps.isToday) {
+                subText = `Najbliższy kurs: ${sulkowiceDeps.dayName}`;
+            }
+            if (sFollow) sFollow.textContent = subText;
+        } else {
+            if (sTime) sTime.textContent = "--:--";
+            if (sNotes) sNotes.textContent = "Brak kursów";
+        }
+    }
+
+    async function fetchSchedule() {
+        try {
+            if (window.fetchWithCache) {
+                const data = await window.fetchWithCache('/api/schedule', 'mleczek_schedule', 1800000);
+                currentScheduleData = data;
+                requestAnimationFrame(updateDisplays);
+            }
+        } catch (error) {
+            console.error("Error fetching schedule:", error);
+            const mNotes = document.getElementById('next-myslenice-notes');
+            const sNotes = document.getElementById('next-sulkowice-notes');
+            if (mNotes) mNotes.textContent = "Błąd pobierania danych";
+            if (sNotes) sNotes.textContent = "Błąd pobierania danych";
+        }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        const nextMysleniceTimeEl = document.getElementById('next-myslenice-time');
+        const nextSulkowiceTimeEl = document.getElementById('next-sulkowice-time');
+
+        // Only activate if schedule elements are in DOM
+        if (!nextMysleniceTimeEl && !nextSulkowiceTimeEl) return;
+
+        fetchSchedule();
+
+        // Auto-refresh departures every 60s
+        setInterval(() => {
+            requestAnimationFrame(updateDisplays);
+        }, 60000);
+
+        // Zoom Modal Setup
+        const modal = document.getElementById('schedule-modal');
+        const btnShowModal = document.getElementById('btn-show-modal');
+        const btnCloseModal = document.getElementById('modal-close');
+
+        if (btnShowModal && modal && btnCloseModal) {
+            btnShowModal.addEventListener('click', () => {
+                const modalImg = modal.querySelector('.modal-image');
+                if (modalImg) {
+                    modalImg.src = '/rozklad-current?v=' + new Date().getTime();
+                }
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            });
+
+            const closeModal = () => {
+                modal.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            };
+
+            btnCloseModal.addEventListener('click', closeModal);
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && modal.classList.contains('active')) {
+                    closeModal();
+                }
+            });
+        }
+    });
+})();

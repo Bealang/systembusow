@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 - Nie odnaleziono strony | Mleczekbus</title>
-    <meta name="description" content="Ups! Strona, której szukasz, odjechała w innym kierunku. Wróć na stronę główną Mleczekbus.">
+    <title>Błąd | Mleczekbus</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght=0,200..800;1,200..800&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -41,11 +40,10 @@
                 </svg>
             </div>
             
-            <div class="error-code">404</div>
-            <h1 class="error-title">Ups! Ten przystanek nie istnieje</h1>
-            <p class="error-message">
-                Wygląda na to, że Twój autobus właśnie odjechał... w zupełnie innym kierunku niż zamierzałeś. 
-                Spokojnie, zawsze możesz wrócić do bazy i sprawdzić aktualny rozkład!
+            <div class="error-code" id="error-code">---</div>
+            <h1 class="error-title" id="error-title">Ups! Wystąpił błąd</h1>
+            <p class="error-message" id="error-message">
+                Coś poszło nie tak na naszej trasie...
             </p>
             
             <div class="error-actions">
@@ -56,6 +54,49 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Error dictionary with thematic descriptions
+            const errorData = {
+                '400': {
+                    title: "Błędne zapytanie",
+                    message: "Nasz system nie mógł zrozumieć Twojego żądania. Sprawdź, czy wprowadzony adres jest poprawny."
+                },
+                '401': {
+                    title: "Brak autoryzacji",
+                    message: "Dostęp do tej strefy wymaga biletu kontrolnego (zalogowania). Zaloguj się, by kontynuować."
+                },
+                '403': {
+                    title: "Dostęp zabroniony",
+                    message: "Nie masz uprawnień, aby wejść na ten przystanek. Ten obszar jest zarezerwowany wyłącznie dla obsługi."
+                },
+                '404': {
+                    title: "Ups! Ten przystanek nie istnieje",
+                    message: "Wygląda na to, że Twój autobus właśnie odjechał... w zupełnie innym kierunku niż zamierzałeś. Spokojnie, zawsze możesz wrócić do bazy i sprawdzić rozkład!"
+                },
+                '500': {
+                    title: "Wewnętrzny błąd serwera",
+                    message: "Nasz autobus napotkał nagłą awarię techniczną na trasie. Mechanicy już pracują nad usunięciem usterki. Spróbuj ponownie za chwilę!"
+                },
+                '503': {
+                    title: "Przerwa techniczna",
+                    message: "Trwają zaplanowane prace serwisowe nad tablicami rozkładu jazdy. Zapraszamy do powrotu za kilka minut!"
+                }
+            };
+
+            // Get error code from URL query (e.g. ?code=503)
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code') || '404';
+
+            // Populate page content
+            const data = errorData[code] || {
+                title: "Nieznany błąd",
+                message: "Coś zakłóciło nasz przejazd. Spróbuj wrócić na stronę główną."
+            };
+
+            document.getElementById('error-code').textContent = code;
+            document.getElementById('error-title').textContent = data.title;
+            document.getElementById('error-message').textContent = data.message;
+            document.title = `${code} - ${data.title} | Mleczekbus`;
+
             // Intersection Observer for Reveal
             const revealCallback = (entries) => {
                 entries.forEach(entry => {

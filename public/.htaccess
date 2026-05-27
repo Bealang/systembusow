@@ -1,0 +1,23 @@
+RewriteEngine On
+
+# Przekierowanie z /index lub /index.html na / (główna strona)
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s/index(\.html)?\s [NC]
+RewriteRule ^ / [R=301,L]
+
+# 1. Usunięcie rozszerzenia .html z adresów URL (np. /cennik.html -> /cennik)
+# Zewnętrzne przekierowanie z .html na bez-html (dla czystości wyszukiwarek)
+RewriteCond %{THE_REQUEST} ^[A-Z]{3,}\s([^.]+)\.html [NC]
+RewriteRule ^ %1 [R=301,L]
+
+# Wewnętrzne przekierowanie bez-html na .html (aby serwer wiedział co otworzyć)
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}\.html -f
+RewriteRule ^(.*)$ $1.html [NC,L]
+
+# 2. Definicja spersonalizowanych dynamicznych stron błędów
+ErrorDocument 400 /error?code=400
+ErrorDocument 401 /error?code=401
+ErrorDocument 403 /error?code=403
+ErrorDocument 404 /error?code=404
+ErrorDocument 500 /error?code=500
+ErrorDocument 503 /error?code=503
