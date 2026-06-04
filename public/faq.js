@@ -1,5 +1,5 @@
 // ============================================================================
-// MLECZEK BUS - FAQ Accordion Module (faq.js)
+// Testbus - FAQ Accordion Module (faq.js)
 // Lazily loads FAQ data and handles smooth details/summary toggling
 // ============================================================================
 
@@ -23,7 +23,7 @@
         async function fetchFaqs() {
             try {
                 if (window.fetchWithCache) {
-                    const data = await window.fetchWithCache('/api/faq', 'mleczek_faq', 86400000);
+                    const data = await window.fetchWithCache('/api/faq', 'pytania', 86400000);
                     renderFaqs(data);
                 }
             } catch (e) {

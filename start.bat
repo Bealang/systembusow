@@ -1,7 +1,7 @@
 @echo off
-title Serwer Mleczek Bus
+title Serwer Testbus
 echo =======================================
-echo    Uruchamianie serwera Mleczek Bus
+echo    Uruchamianie serwera Testbus
 echo =======================================
 echo.
 node server.js

@@ -19,7 +19,7 @@
     }
 
     function formatNotes(notesArray) {
-        if (!notesArray || notesArray.length === 0) return "kurs zwykły";
+        if (!notesArray || notesArray.length === 0) return "";
 
         return notesArray.map(n => {
             let span = `<span class="note-badge">${n}</span>`;
@@ -124,13 +124,36 @@
         }
     }
 
+    async function fetchAttributes() {
+        try {
+            const res = await fetch('/api/attributes');
+            const attributes = await res.json();
+            
+            window.NOTE_DESCRIPTIONS = {};
+            attributes.forEach(attr => {
+                window.NOTE_DESCRIPTIONS[attr.symbol] = attr.description;
+            });
+            
+            const legendList = document.getElementById('legend-dynamic-list');
+            if (legendList) {
+                legendList.innerHTML = '';
+                attributes.forEach(attr => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span class="badge">${attr.symbol}</span> - ${attr.description}`;
+                    legendList.appendChild(li);
+                });
+            }
+        } catch (e) {
+            console.error("Failed to load attributes", e);
+        }
+    }
+
     async function fetchSchedule() {
         try {
-            if (window.fetchWithCache) {
-                const data = await window.fetchWithCache('/api/schedule', 'mleczek_schedule', 1800000);
-                currentScheduleData = data;
-                requestAnimationFrame(updateDisplays);
-            }
+            const res = await fetch('/api/schedule');
+            const data = await res.json();
+            currentScheduleData = data;
+            requestAnimationFrame(updateDisplays);
         } catch (error) {
             console.error("Error fetching schedule:", error);
             const mNotes = document.getElementById('next-myslenice-notes');
@@ -148,7 +171,9 @@
         // Only activate if schedule elements are in DOM
         if (!nextMysleniceTimeEl && !nextSulkowiceTimeEl) return;
 
-        fetchSchedule();
+        fetchAttributes().then(() => {
+            fetchSchedule();
+        });
 
         // Auto-refresh departures every 60s
         setInterval(() => {

@@ -4,7 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let allStops = [];
     let allPrices = [];
     let allFaqs = [];
+    let allAttributes = [];
     let editingFaqId = null;
+    let editingAttrSymbol = null;
     let isMonthlyManuallyEdited = false;
     let isMonthlyDiscountManuallyEdited = false;
 
@@ -18,10 +20,273 @@ document.addEventListener('DOMContentLoaded', () => {
                 [{ 'header': [1, 2, 3, false] }],
                 [{ 'size': ['small', false, 'large', 'huge'] }],
                 [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                ['image'],
                 ['clean']
             ]
         }
     });
+
+    // Override Quill's default image handler
+    quill.getModule('toolbar').addHandler('image', () => {
+        const input = document.createElement('input');
+        input.setAttribute('type', 'file');
+        input.setAttribute('accept', 'image/png, image/jpeg, image/jpg, image/webp, image/avif');
+        input.click();
+
+        input.onchange = async () => {
+            const file = input.files[0];
+            if (!file) return;
+            await processAndUploadImage(file);
+        };
+    });
+
+    // Drag & Drop and Paste handlers for News Editor
+    const editorContainer = document.querySelector('#news-editor');
+    if (editorContainer) {
+        editorContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        editorContainer.addEventListener('drop', async (e) => {
+            e.preventDefault();
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+                const files = Array.from(e.dataTransfer.files);
+                for (const file of files) {
+                    if (file.type.startsWith('image/')) {
+                        await processAndUploadImage(file);
+                    }
+                }
+            }
+        });
+
+        editorContainer.addEventListener('paste', async (e) => {
+            if (e.clipboardData && e.clipboardData.files && e.clipboardData.files.length) {
+                e.preventDefault();
+                const files = Array.from(e.clipboardData.files);
+                for (const file of files) {
+                    if (file.type.startsWith('image/')) {
+                        await processAndUploadImage(file);
+                    }
+                }
+            }
+        });
+    }
+
+    // Client-side image load helper
+    function loadImage(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = () => reject(new Error('Niepoprawny plik graficzny.'));
+                img.src = e.target.result;
+            };
+            reader.onerror = () => reject(new Error('Błąd odczytu pliku.'));
+            reader.readAsDataURL(file);
+        });
+    }
+
+    // Optimize image using Canvas and upload to server
+    async function processAndUploadImage(file) {
+        showStatus('Przetwarzanie i optymalizacja obrazu...', 'success');
+        
+        try {
+            const img = await loadImage(file);
+            
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            
+            const maxDimension = 1200;
+            if (width > maxDimension || height > maxDimension) {
+                if (width > height) {
+                    height = Math.round((height * maxDimension) / width);
+                    width = maxDimension;
+                } else {
+                    width = Math.round((width * maxDimension) / height);
+                    height = maxDimension;
+                }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            const webpBlob = await new Promise((resolve) => {
+                canvas.toBlob((blob) => {
+                    resolve(blob);
+                }, 'image/webp', 0.82);
+            });
+            
+            if (!webpBlob) {
+                throw new Error('Kompresja obrazu nie powiodła się.');
+            }
+            
+            const formData = new FormData();
+            formData.append('image', webpBlob, 'image.webp');
+            
+            const res = await fetch('/api/admin/upload-news-image', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || 'Wystąpił błąd podczas wgrywania pliku.');
+            }
+            
+            const range = quill.getSelection(true);
+            quill.insertEmbed(range.index, 'image', data.url, Quill.sources.USER);
+            quill.setSelection(range.index + 1, Quill.sources.SILENT);
+            
+            showStatus('Obraz został pomyślnie dodany i zoptymalizowany!', 'success');
+        } catch (err) {
+            console.error('Błąd przetwarzania obrazu:', err);
+            showStatus(err.message || 'Błąd przetwarzania obrazu.', 'error');
+        }
+    }
+
+    // --- Custom Image Resizer ---
+    let currentSelectedImg = null;
+    let resizerOverlay = null;
+
+    function initImageResizer() {
+        const editorContainer = document.querySelector('#news-editor');
+        if (!editorContainer) return;
+
+        resizerOverlay = document.createElement('div');
+        resizerOverlay.className = 'quill-image-resizer-overlay';
+        resizerOverlay.style.position = 'absolute';
+        resizerOverlay.style.display = 'none';
+        resizerOverlay.style.pointerEvents = 'none';
+        resizerOverlay.style.zIndex = '1000';
+        resizerOverlay.style.border = '2px dashed var(--primary-color, #2563eb)';
+
+        const handle = document.createElement('div');
+        handle.className = 'quill-image-resizer-handle';
+        handle.style.position = 'absolute';
+        handle.style.width = '12px';
+        handle.style.height = '12px';
+        handle.style.background = 'var(--primary-color, #2563eb)';
+        handle.style.border = '2px solid white';
+        handle.style.borderRadius = '50%';
+        handle.style.bottom = '-7px';
+        handle.style.right = '-7px';
+        handle.style.cursor = 'se-resize';
+        handle.style.pointerEvents = 'auto';
+
+        resizerOverlay.appendChild(handle);
+        
+        const quillWrapper = editorContainer.querySelector('.ql-container');
+        if (quillWrapper) {
+            quillWrapper.style.position = 'relative';
+            quillWrapper.appendChild(resizerOverlay);
+        }
+
+        const qlEditor = editorContainer.querySelector('.ql-editor');
+        if (qlEditor) {
+            qlEditor.addEventListener('click', (e) => {
+                if (e.target.tagName === 'IMG') {
+                    selectImageForResize(e.target);
+                    e.stopPropagation();
+                } else {
+                    deselectImage();
+                }
+            });
+
+            qlEditor.addEventListener('scroll', () => {
+                if (currentSelectedImg) {
+                    repositionResizer();
+                }
+            });
+        }
+
+        let isDragging = false;
+        let startWidth = 0;
+        let startX = 0;
+
+        handle.addEventListener('mousedown', (e) => {
+            if (!currentSelectedImg) return;
+            e.preventDefault();
+            e.stopPropagation();
+
+            isDragging = true;
+            startWidth = currentSelectedImg.clientWidth;
+            startX = e.clientX;
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+
+        function onMouseMove(e) {
+            if (!isDragging || !currentSelectedImg) return;
+            const deltaX = e.clientX - startX;
+            let newWidth = startWidth + deltaX;
+
+            const minWidth = 50;
+            const maxWidth = qlEditor.clientWidth - 30;
+            if (newWidth < minWidth) newWidth = minWidth;
+            if (newWidth > maxWidth) newWidth = maxWidth;
+
+            currentSelectedImg.style.width = newWidth + 'px';
+            currentSelectedImg.style.height = 'auto';
+
+            repositionResizer();
+        }
+
+        function onMouseUp() {
+            if (isDragging) {
+                isDragging = false;
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                quill.update();
+            }
+        }
+    }
+
+    function selectImageForResize(img) {
+        currentSelectedImg = img;
+        repositionResizer();
+        resizerOverlay.style.display = 'block';
+    }
+
+    window.deselectImage = () => {
+        currentSelectedImg = null;
+        if (resizerOverlay) {
+            resizerOverlay.style.display = 'none';
+        }
+    };
+
+    function repositionResizer() {
+        if (!currentSelectedImg || !resizerOverlay) return;
+
+        const img = currentSelectedImg;
+        const qlContainer = document.querySelector('#news-editor .ql-container');
+        if (!qlContainer) return;
+
+        const imgRect = img.getBoundingClientRect();
+        const containerRect = qlContainer.getBoundingClientRect();
+        
+        const top = imgRect.top - containerRect.top + qlContainer.scrollTop;
+        const left = imgRect.left - containerRect.left + qlContainer.scrollLeft;
+        
+        resizerOverlay.style.top = top + 'px';
+        resizerOverlay.style.left = left + 'px';
+        resizerOverlay.style.width = imgRect.width + 'px';
+        resizerOverlay.style.height = imgRect.height + 'px';
+    }
+
+    document.addEventListener('click', (e) => {
+        const editor = document.querySelector('#news-editor');
+        if (editor && !editor.contains(e.target)) {
+            window.deselectImage();
+        }
+    });
+
+    // Initialize resizer
+    initImageResizer();
 
     // Check Auth Status
     checkAuth();
@@ -37,6 +302,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             btn.classList.add('active');
             document.getElementById(btn.dataset.tab).classList.add('active');
+
+            if (window.deselectImage) window.deselectImage();
 
             // Zamknij menu na mobile po kliknięciu w zakładkę
             const sidebar = document.getElementById('admin-header-main');
@@ -94,6 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadAdminSchedule();
                 loadPricingData();
                 loadFaqData();
+                loadAttributesData();
             } else {
                 document.getElementById('login-screen').style.display = 'flex';
                 document.getElementById('admin-header-main').style.display = 'none';
@@ -114,6 +382,129 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {
             console.error("Nie wczytano rozkładu jazdy:",e);
         }
+    }
+
+    async function loadAttributesData() {
+        try {
+            const res = await fetch('/api/attributes');
+            allAttributes = await res.json();
+            renderAttributesList();
+            populateModalAttributes();
+            
+            // Re-render schedule builder view if we currently have one loaded
+            const citySelect = document.getElementById('schedule-city-select');
+            const daySelect = document.getElementById('schedule-day-select');
+            const hasTable = containerSchedule && containerSchedule.querySelector('.schedule-row');
+            if (hasTable && citySelect && daySelect) {
+                renderScheduleTable(citySelect.value, daySelect.value);
+            }
+        } catch (e) {
+            console.error("Nie wczytano atrybutów:", e);
+        }
+    }
+
+    function renderAttributesList() {
+        const container = document.getElementById('attributes-list-container');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        if (allAttributes.length === 0) {
+            container.innerHTML = '<p style="color: var(--text-secondary); font-size: 0.9rem;">Brak zdefiniowanych oznaczeń.</p>';
+            return;
+        }
+
+        allAttributes.forEach(attr => {
+            const div = document.createElement('div');
+            div.className = 'stop-item';
+            div.innerHTML = `
+                <div style="flex-grow: 1; padding: 10px 0; display: flex; align-items: center; gap: 10px;">
+                    <span class="legend-badge" style="background: var(--primary-color); color: white; padding: 2px 8px; border-radius: 4px; font-weight: bold;">${attr.symbol}</span>
+                    <span>${attr.description}</span>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn-primary" style="padding: 8px 16px; font-size: 0.85rem; background: #64748b;" onclick="editAttribute('${attr.symbol}', '${attr.description.replace(/'/g, "\\'")}')">Edytuj</button>
+                    <button class="btn-danger" style="padding: 8px 16px; font-size: 0.85rem;" onclick="deleteAttribute('${attr.symbol}')">Usuń</button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    window.deleteAttribute = async (symbol) => {
+        if (!confirm(`Na pewno chcesz usunąć oznaczenie [${symbol}]? Upewnij się, że nie jest ono przypisane do żadnego kursu.`)) return;
+        try {
+            const res = await fetch(`/api/admin/attributes/${encodeURIComponent(symbol)}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showStatus('Oznaczenie zostało usunięte.', 'success');
+                loadAttributesData();
+            } else {
+                showStatus(data.error || 'Błąd podczas usuwania oznaczenia.', 'error');
+            }
+        } catch (e) {
+            showStatus('Błąd połączenia podczas usuwania oznaczenia.', 'error');
+        }
+    };
+
+    window.editAttribute = (symbol, description) => {
+        editingAttrSymbol = symbol;
+        document.getElementById('new-attr-symbol').value = symbol;
+        document.getElementById('new-attr-desc').value = description;
+        
+        const submitBtn = document.querySelector('#add-attribute-form button[type="submit"]');
+        if (submitBtn) submitBtn.textContent = 'Zapisz zmiany';
+        
+        // Add cancel button if not present
+        const form = document.getElementById('add-attribute-form');
+        if (form && !document.getElementById('cancel-edit-attr-btn')) {
+            const cancelBtn = document.createElement('button');
+            cancelBtn.type = 'button';
+            cancelBtn.id = 'cancel-edit-attr-btn';
+            cancelBtn.className = 'btn-danger';
+            cancelBtn.style.cssText = 'height: 46px; margin-left: 10px; padding: 0 20px;';
+            cancelBtn.textContent = 'Anuluj';
+            cancelBtn.onclick = window.resetAttributeForm;
+            form.appendChild(cancelBtn);
+        }
+        
+        document.getElementById('add-attribute-form').scrollIntoView({ behavior: 'smooth' });
+    };
+
+    window.resetAttributeForm = () => {
+        editingAttrSymbol = null;
+        document.getElementById('new-attr-symbol').value = '';
+        document.getElementById('new-attr-desc').value = '';
+        
+        const submitBtn = document.querySelector('#add-attribute-form button[type="submit"]');
+        if (submitBtn) submitBtn.textContent = 'Dodaj atrybut';
+        
+        const cancelBtn = document.getElementById('cancel-edit-attr-btn');
+        if (cancelBtn) cancelBtn.remove();
+    };
+
+    function populateModalAttributes() {
+        const container = document.getElementById('modal-attributes-container');
+        if (!container) return;
+        
+        container.innerHTML = '';
+        allAttributes.forEach(attr => {
+            const label = document.createElement('label');
+            label.className = 'variant-tag';
+            label.style.display = 'inline-flex';
+            label.style.alignItems = 'center';
+            label.style.gap = '6px';
+            label.style.marginRight = '10px';
+            label.style.marginBottom = '10px';
+            label.style.cursor = 'pointer';
+            
+            label.innerHTML = `
+                <input type="checkbox" class="modal-attr-checkbox" data-symbol="${attr.symbol}">
+                <span>${attr.description} (${attr.symbol})</span>
+            `;
+            container.appendChild(label);
+        });
     }
 
     // Login Form
@@ -230,27 +621,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const div = document.createElement('div');
         div.className = 'schedule-row';
 
-        const isS = notes.includes('S');
-        const isRD = notes.includes('RD');
-        const isH = notes.includes('H');
+        const checkboxesHtml = allAttributes.map(attr => {
+            const isChecked = notes.includes(attr.symbol);
+            return `
+                <label class="variant-tag" style="display: inline-flex; align-items: center; gap: 4px; margin-right: 8px; cursor: pointer;">
+                    <input type="checkbox" class="row-attr" data-symbol="${attr.symbol}" ${isChecked ? 'checked' : ''}>
+                    <span>${attr.symbol}</span>
+                </label>
+            `;
+        }).join('');
 
         div.innerHTML = `
             <div class="schedule-time-wrap">
                 <input type="time" class="row-time input-time" value="${time}" required>
             </div>
             <div class="schedule-tags-wrap">
-                <label class="variant-tag tag-s">
-                    <input type="checkbox" class="row-s" ${isS ? 'checked' : ''}>
-                    <span>Szkolny (S)</span>
-                </label>
-                <label class="variant-tag tag-rd">
-                    <input type="checkbox" class="row-rd" ${isRD ? 'checked' : ''}>
-                    <span>Rudnik (RD)</span>
-                </label>
-                <label class="variant-tag tag-h">
-                    <input type="checkbox" class="row-h" ${isH ? 'checked' : ''}>
-                    <span>Harbutowice (H)</span>
-                </label>
+                ${checkboxesHtml || '<span style="color: #94a3b8; font-size: 0.85rem;">Brak oznaczeń</span>'}
             </div>
             <button type="button" class="btn-danger rm-row">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -292,9 +678,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function openModal() {
         addCourseModal.classList.add('active');
         document.getElementById('new-course-time').value = "12:00";
-        document.getElementById('new-course-s').checked = false;
-        document.getElementById('new-course-rd').checked = false;
-        document.getElementById('new-course-h').checked = false;
+        // Uncheck all checkboxes in modal-attributes-container
+        const checkboxes = document.querySelectorAll('#modal-attributes-container .modal-attr-checkbox');
+        checkboxes.forEach(cb => cb.checked = false);
     }
 
     function closeModal() {
@@ -313,15 +699,50 @@ document.addEventListener('DOMContentLoaded', () => {
     confirmAddBtn.addEventListener('click', () => {
         const time = document.getElementById('new-course-time').value;
         const notes = [];
-        if (document.getElementById('new-course-s').checked) notes.push('S');
-        if (document.getElementById('new-course-rd').checked) notes.push('RD');
-        if (document.getElementById('new-course-h').checked) notes.push('H');
+        const checkboxes = document.querySelectorAll('#modal-attributes-container .modal-attr-checkbox:checked');
+        checkboxes.forEach(cb => {
+            notes.push(cb.dataset.symbol);
+        });
 
         containerSchedule.appendChild(createScheduleRow(time, notes));
         sortScheduleDOM();
         closeModal();
         showStatus('Kurs został dodany do listy (nie zapomnij zapisać zmian!).', 'success');
     });
+
+    // Form submit listener for adding/editing attributes
+    const addAttrForm = document.getElementById('add-attribute-form');
+    if (addAttrForm) {
+        addAttrForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const symbol = document.getElementById('new-attr-symbol').value.trim();
+            const description = document.getElementById('new-attr-desc').value.trim();
+            if (!symbol || !description) return;
+
+            try {
+                const url = editingAttrSymbol ? `/api/admin/attributes/${encodeURIComponent(editingAttrSymbol)}` : '/api/admin/attributes';
+                const method = editingAttrSymbol ? 'PUT' : 'POST';
+                
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ symbol, description })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showStatus(editingAttrSymbol ? 'Zaktualizowano oznaczenie kursów.' : 'Dodano nowe oznaczenie kursów.', 'success');
+                    window.resetAttributeForm();
+                    loadAttributesData();
+                    // Load the schedule as well, since renaming a symbol migrates it in database!
+                    loadAdminSchedule();
+                } else {
+                    showStatus(data.error || 'Błąd zapisu oznaczenia.', 'error');
+                }
+            } catch (err) {
+                showStatus('Błąd połączenia podczas zapisywania oznaczenia.', 'error');
+            }
+        });
+    }
 
     btnSaveSchedule.addEventListener('click', async () => {
         const city = document.getElementById('schedule-city-select').value;
@@ -332,10 +753,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         rows.forEach(row => {
             const time = row.querySelector('.row-time').value;
-            let notes = [];
-            if (row.querySelector('.row-h').checked) notes.push('H');
-            if (row.querySelector('.row-s').checked) notes.push('S');
-            if (row.querySelector('.row-rd').checked) notes.push('RD');
+            const notes = [];
+            row.querySelectorAll('.row-attr:checked').forEach(cb => {
+                notes.push(cb.dataset.symbol);
+            });
 
             newCourses.push({ time, notes });
         });
@@ -357,7 +778,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await res.json();
             if (res.ok) {
-                localStorage.removeItem('mleczek_schedule');
                 showStatus(data.message, 'success');
             } else {
                 showStatus(data.error || 'Błąd', 'error');
@@ -371,6 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // News Submit (Add / Edit)
     document.getElementById('news-form').addEventListener('submit', async (e) => {
         e.preventDefault();
+        if (window.deselectImage) window.deselectImage();
         const title = document.getElementById('news-title').value;
         const content = quill.root.innerHTML;
         if (!title || title.trim() === '') {
@@ -420,12 +841,13 @@ document.addEventListener('DOMContentLoaded', () => {
     formBtn.parentNode.insertBefore(cancelEditBtn, formBtn.nextSibling);
 
     window.cancelEditing = () => {
-        editingNewsId = null;
-        document.getElementById('news-title').value = '';
-        quill.root.innerHTML = '';
-        formBtn.textContent = 'Zapisz Publikację';
-        cancelEditBtn.style.display = 'none';
-    };
+            if (window.deselectImage) window.deselectImage();
+            editingNewsId = null;
+            document.getElementById('news-title').value = '';
+            quill.root.innerHTML = '';
+            formBtn.textContent = 'Zapisz Publikację';
+            cancelEditBtn.style.display = 'none';
+        };
 
     cancelEditBtn.addEventListener('click', cancelEditing);
 
@@ -598,7 +1020,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ orders })
             });
             if (res.ok) {
-                localStorage.removeItem('mleczek_stops');
+                localStorage.removeItem('przystanki');
                 localStorage.removeItem('mleczek_pricing');
                 showStatus('Kolejność przystanków została zapisana.', 'success');
                 // Refresh local data to match server sort
@@ -627,7 +1049,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (res.ok) {
                 allStops = data.stops;
-                localStorage.removeItem('mleczek_stops');
+                localStorage.removeItem('przystanki');
                 localStorage.removeItem('mleczek_pricing');
                 showStatus('Nazwa przystanku została zaktualizowana.', 'success');
                 renderStopsList();
@@ -648,7 +1070,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (res.ok) {
                 const data = await res.json();
                 allStops = data.stops;
-                localStorage.removeItem('mleczek_stops');
+                localStorage.removeItem('przystanki');
                 localStorage.removeItem('mleczek_pricing');
                 showStatus('Przystanek usunięty pomyślnie.', 'success');
                 loadPricingData(); // Reload everything to refresh prices
@@ -677,7 +1099,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (res.ok) {
                 allStops = data.stops;
-                localStorage.removeItem('mleczek_stops');
+                localStorage.removeItem('przystanki');
                 localStorage.removeItem('mleczek_pricing');
                 document.getElementById('new-stop-name').value = '';
                 showStatus(`Przystanek "${name}" został dodany.`, 'success');
@@ -1007,7 +1429,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ orders })
                     });
-                    localStorage.removeItem('mleczek_faq');
+                    localStorage.removeItem('pytania');
                     showStatus('Kolejność FAQ została zapisana.', 'success');
                 } catch (e) {
                     showStatus('Błąd połączenia przy zapisywaniu kolejności FAQ.', 'error');
@@ -1035,7 +1457,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (res.ok) {
                 allFaqs = data.faqs;
-                localStorage.removeItem('mleczek_faq');
+                localStorage.removeItem('pytania');
                 showStatus(editingFaqId ? 'Pytanie FAQ zostało zaktualizowane.' : 'Nowe pytanie FAQ zostało dodane.', 'success');
                 resetFaqForm();
                 renderFaqList();
@@ -1087,7 +1509,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             if (res.ok) {
                 allFaqs = data.faqs;
-                localStorage.removeItem('mleczek_faq');
+                localStorage.removeItem('pytania');
                 showStatus('Pytanie FAQ zostało usunięte.', 'success');
                 renderFaqList();
             }

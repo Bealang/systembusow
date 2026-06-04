@@ -3,13 +3,26 @@
     <!-- Header / Hero section -->
     <header class="hero">
         <div class="container">
-            <h1 class="hero-title reveal reveal-up stagger-1">Busy Sułkowice - Myślenice<br> Pewnie i na czas.</h1>
-            <p class="reveal reveal-up stagger-2">Sprawdź nasz rozkład jazdy i podróżuj z nami na trasie:
-                <strong>Harbutowice - Sułkowice - Rudnik -
-                    Jawornik - Myślenice</strong>.
+            <h1 class="hero-title reveal reveal-up stagger-1">Nazwa twojej<br>Firmy</h1>
+            <p class="reveal reveal-up stagger-2">Krótki opis firmy, jakie miejscowości obsługuje etc <br>Zdjęcie w tle
+                do zmiany
             </p>
             <div class="reveal reveal-up stagger-3">
-                <button class="btn-primary" id="btn-show-modal">Zobacz Pełny Rozkład</button>
+                <div class="btn-group-joined">
+                    <a href="/rozklad" class="btn-primary"
+                        style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">Zobacz
+                        Pełny Rozkład</a>
+                    <button class="btn-primary-square" id="btn-show-modal" aria-label="Pokaż zdjęcie rozkładu"
+                        title="Pokaż wersję graficzną rozkładu">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            style="display: block;">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
     </header>
@@ -19,11 +32,11 @@
         <section class="departures-section">
             <div class="container">
                 <div class="section-header reveal reveal-up">
-                    <h2 class="section-title">Najbliższe odjazdy</h2>
+                    <h2 class="section-title">Najbliższe kursy</h2>
                     <div class="title-underline"></div>
                     <p style="text-align: center; margin-top: 1rem; color: var(--text-secondary);">Obsługujemy
                         miejscowości:
-                        Harbutowice, Sułkowice, Rudnik, Jawornik i Myślenice.</p>
+                        Twoje obsługiwane miejscowości</p>
                 </div>
 
                 <div class="cards-grid">
@@ -39,9 +52,8 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3>z Myślenic</h3>
-                                <span class="destination-subtext">Kierunek: Jawornik, Rudnik, Sułkowice, Harbutowice
-                                    [H]</span>
+                                <h3>z [Miejscowość]</h3>
+                                <span class="destination-subtext">Kierunek: [Miejscowości]</span>
                             </div>
                         </div>
                         <div class="card-body">
@@ -67,8 +79,8 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3>z Sułkowic/Harbutowic</h3>
-                                <span class="destination-subtext">Kierunek: Rudnik, Jawornik, Myślenice</span>
+                                <h3>z [Miejscowość]</h3>
+                                <span class="destination-subtext">Kierunek: [Miejscowości]</span>
                             </div>
                         </div>
                         <div class="card-body">
@@ -85,13 +97,12 @@
             </div>
         </section>
 
+        <!-- Legend Section -->
         <section class="legend-section">
             <div class="container">
                 <h4>Legenda oznaczeń:</h4>
-                <ul class="legend-list">
-                    <li><span class="badge">H</span> - kurs do/z Harbutowic</li>
-                    <li><span class="badge">RD</span> - kurs przez Rudnik Dolny</li>
-                    <li><span class="badge">S</span> - kurs szkolny (nie kursuje w dni wolne i wakacje)</li>
+                <ul class="legend-list" id="legend-dynamic-list">
+                    <!-- Dynamicznie wczytywane z API -->
                 </ul>
             </div>
         </section>
@@ -141,8 +152,8 @@
         </div>
     </div>
 
-    <script src="/schedule.js" defer></script>
-    <script src="/news.js" defer></script>
-    <script src="/faq.js" defer></script>
+    <script src="/schedule.js?v=2" defer></script>
+    <script src="/news.js?v=2" defer></script>
+    <script src="/faq.js?v=2" defer></script>
 
-<%- include('partials/footer') %>
+    <%- include('partials/footer') %>

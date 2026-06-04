@@ -1,15 +1,10 @@
 // ============================================================================
-// MLECZEK BUS - Common / Core Script (main.js)
+// Testbus - Common / Core Script (main.js)
 // Shared utilities, navigation, cookie banner, scroll effects
 // ============================================================================
 
 // --- Configs & Global Constants ---
-window.NOTE_DESCRIPTIONS = {
-    "H": "do/z Harbutowic",
-    "RD": "przez Rudnik Dolny",
-    "S": "kurs szkolny",
-    "D": "szczegóły na rozkładzie"
-};
+window.NOTE_DESCRIPTIONS = {};
 
 // --- General Utility Helpers (exposed to window for other scripts) ---
 window.timeToMinutes = function(timeStr) {
@@ -77,7 +72,7 @@ function initRevealAnimations() {
 
 // --- Cookie Banner ---
 function initCookieBanner() {
-    if (localStorage.getItem('cookies-accepted')) return;
+    if (localStorage.getItem('zaakceptowane_cookies')) return;
 
     const banner = document.createElement('div');
     banner.className = 'cookie-banner';
@@ -96,7 +91,7 @@ function initCookieBanner() {
     }, 1000);
 
     document.getElementById('cookie-accept').addEventListener('click', () => {
-        localStorage.setItem('cookies-accepted', 'true');
+        localStorage.setItem('zaakceptowane_cookies', 'true');
         banner.classList.remove('active');
         setTimeout(() => banner.remove(), 500);
     });
@@ -104,6 +99,12 @@ function initCookieBanner() {
 
 // --- Bootstrap Core Features ---
 document.addEventListener('DOMContentLoaded', () => {
+    // Clear legacy customizer cookies once to revert theme changes
+    if (document.cookie.includes('testbus_')) {
+        document.cookie = 'testbus_font=; Max-Age=-99999999; path=/; SameSite=Lax';
+        document.cookie = 'testbus_theme=; Max-Age=-99999999; path=/; SameSite=Lax';
+    }
+
     // 1. Current year in footer
     const yearEl = document.getElementById('current-year');
     if (yearEl) {

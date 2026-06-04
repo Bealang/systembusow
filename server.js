@@ -14,7 +14,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Configuration
-const ADMIN_USER = 'pmleczek';
+const ADMIN_USER = 'bealang';
 const ADMIN_HASH = (process.env.ADMIN_HASH_B64
     ? Buffer.from(process.env.ADMIN_HASH_B64, 'base64').toString()
     : process.env.ADMIN_HASH || '').trim();
@@ -89,9 +89,9 @@ app.get('/index', (req, res) => {
 // --- Page Render Routes ---
 app.get('/', (req, res) => {
     res.render('index', {
-        title: 'Mleczek Bus - Busy Sułkowice, Rudnik, Myślenice | Rozkład Jazdy',
-        description: 'Szukasz busa? Mleczek Bus oferuje regularne przewozy pasażerskie na trasie Myślenice - Sułkowice - Rudnik - Jawornik - Harbutowice. Sprawdź aktualny rozkład jazdy online!',
-        keywords: 'Busy Sułkowice, Busy Rudnik, Busy Myślenice, Mleczekbus trasa, rozkład jazdy Myślenice Sułkowice, busy Harbutowice Myślenice',
+        title: 'TestBUS | Przewozy osób',
+        description: 'Szukasz busa? Oferujemy regularne przewozy pasażerskie. Sprawdź aktualny rozkład jazdy online!',
+        keywords: 'rozklad jazdy, bus cennik, busy, przewoz osob, bilety miesieczne',
         activePage: 'home',
         isHome: true
     });
@@ -99,9 +99,9 @@ app.get('/', (req, res) => {
 
 app.get('/cennik', (req, res) => {
     res.render('cennik', {
-        title: 'Mleczek Bus - Cennik',
-        description: 'Sprawdź ceny biletów jednorazowych oraz miesięcznych dla wszystkich połączeń na trasie Myślenice - Sułkowice.',
-        keywords: 'cennik busy, ceny biletów Myślenice Sułkowice, bilet miesięczny Mleczek Bus',
+        title: 'TestBUS - Cennik',
+        description: 'Sprawdź ceny biletów jednorazowych oraz miesięcznych dla wszystkich połączeń.',
+        keywords: 'cennik busy, ceny biletów, bilet miesięczny',
         activePage: 'cennik',
         isHome: false
     });
@@ -109,9 +109,9 @@ app.get('/cennik', (req, res) => {
 
 app.get('/kontakt', (req, res) => {
     res.render('kontakt', {
-        title: 'Mleczek Bus - Kontakt',
-        description: 'Skontaktuj się z firmą transportową Mleczek Bus. Dane firmy Pedro Piotr Mleczek, NIP, adres i numer telefonu.',
-        keywords: 'kontakt Mleczek Bus, telefon Mleczek Bus, Piotr Mleczek Pedro',
+        title: 'TestBUS - Kontakt',
+        description: 'Skontaktuj się z nami. Dane kontaktowe, adres i numer telefonu.',
+        keywords: 'kontakt, telefon',
         activePage: 'kontakt',
         isHome: false
     });
@@ -119,12 +119,35 @@ app.get('/kontakt', (req, res) => {
 
 app.get('/prywatnosc', (req, res) => {
     res.render('prywatnosc', {
-        title: 'Mleczek Bus - Polityka Prywatności',
-        description: 'Polityka prywatności serwisu Mleczek Bus. Dowiedz się, jak dbamy o Twoje dane.',
+        title: 'TestBUS - Polityka Prywatności',
+        description: 'Polityka prywatności serwisu. Dowiedz się, jak dbamy o Twoje dane.',
         keywords: '',
         activePage: 'prywatnosc',
         isHome: false
     });
+});
+
+app.get('/rozklad', (req, res) => {
+    try {
+        const scheduleRow = db.prepare("SELECT value FROM config WHERE key = 'schedule'").get();
+        const schedule = scheduleRow ? JSON.parse(scheduleRow.value) : {};
+
+        const attrRow = db.prepare("SELECT value FROM config WHERE key = 'course_attributes'").get();
+        const attributes = attrRow ? JSON.parse(attrRow.value) : [];
+
+        res.render('rozklad', {
+            title: 'TestBUS - Rozkład Jazdy',
+            description: 'Sprawdź aktualny rozkład jazdy busów. Godziny odjazdów i szczegóły połączeń.',
+            keywords: 'rozklad jazdy, odjazdy, busy, przewozy',
+            activePage: 'rozklad',
+            isHome: false,
+            schedule: schedule,
+            attributes: attributes
+        });
+    } catch (error) {
+        console.error("Błąd ładowania rozkładu:", error);
+        res.status(500).send("Wystąpił błąd podczas ładowania rozkładu jazdy.");
+    }
 });
 
 app.get('/admin', (req, res) => {
@@ -322,6 +345,164 @@ app.get('/api/faq', (req, res) => {
     }
 });
 
+app.get('/api/attributes', (req, res) => {
+    try {
+        const row = db.prepare("SELECT value FROM config WHERE key = 'course_attributes'").get();
+        if (row) {
+            res.json(JSON.parse(row.value));
+        } else {
+            const defaults = [{ symbol: 'S', description: 'kurs szkolny' }];
+            res.json(defaults);
+        }
+    } catch (error) {
+        console.error("Błąd pobierania atrybutów:", error);
+        res.status(500).json({ error: 'Błąd serwera.' });
+    }
+});
+
+app.post('/api/admin/attributes', requireAuth, (req, res) => {
+    const { symbol, description } = req.body;
+    if (!symbol || !description) {
+        return res.status(400).json({ error: 'Symbol i opis są wymagane.' });
+    }
+    const cleanSymbol = symbol.trim().toUpperCase();
+    const cleanDesc = description.trim();
+
+    try {
+        const row = db.prepare("SELECT value FROM config WHERE key = 'course_attributes'").get();
+        let attributes = row ? JSON.parse(row.value) : [{ symbol: 'S', description: 'kurs szkolny' }];
+
+        if (attributes.some(attr => attr.symbol === cleanSymbol)) {
+            return res.status(400).json({ error: 'Atrybut o tym symbolu już istnieje.' });
+        }
+
+        attributes.push({ symbol: cleanSymbol, description: cleanDesc });
+        db.prepare("INSERT INTO config (key, value) VALUES ('course_attributes', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(JSON.stringify(attributes));
+        res.json({ success: true, message: 'Dodano atrybut.', attributes });
+    } catch (error) {
+        console.error("Błąd zapisu atrybutu:", error);
+        res.status(500).json({ error: 'Błąd zapisu.' });
+    }
+});
+
+app.delete('/api/admin/attributes/:symbol', requireAuth, (req, res) => {
+    const symbolToDelete = req.params.symbol.trim().toUpperCase();
+
+    try {
+        const row = db.prepare("SELECT value FROM config WHERE key = 'course_attributes'").get();
+        let attributes = row ? JSON.parse(row.value) : [{ symbol: 'S', description: 'kurs szkolny' }];
+
+        attributes = attributes.filter(attr => attr.symbol !== symbolToDelete);
+        db.prepare("INSERT INTO config (key, value) VALUES ('course_attributes', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(JSON.stringify(attributes));
+        
+        // Also remove the deleted attribute from all courses in the schedule
+        const rowSchedule = db.prepare("SELECT value FROM config WHERE key = 'schedule'").get();
+        if (rowSchedule) {
+            const schedule = JSON.parse(rowSchedule.value);
+            let scheduleModified = false;
+            
+            const removeSymbol = (courses) => {
+                if (Array.isArray(courses)) {
+                    courses.forEach(course => {
+                        if (Array.isArray(course.notes)) {
+                            const noteIndex = course.notes.indexOf(symbolToDelete);
+                            if (noteIndex !== -1) {
+                                course.notes.splice(noteIndex, 1);
+                                scheduleModified = true;
+                            }
+                        }
+                    });
+                }
+            };
+            
+            for (const direction in schedule) {
+                const dirObj = schedule[direction];
+                for (const dayType in dirObj) {
+                    removeSymbol(dirObj[dayType]);
+                }
+            }
+            
+            if (scheduleModified) {
+                db.prepare("INSERT INTO config (key, value) VALUES ('schedule', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(JSON.stringify(schedule));
+            }
+        }
+
+        res.json({ success: true, message: 'Usunięto atrybut i wyczyszczono powiązane kursy.', attributes });
+    } catch (error) {
+        console.error("Błąd usuwania atrybutu:", error);
+        res.status(500).json({ error: 'Błąd usuwania.' });
+    }
+});
+
+app.put('/api/admin/attributes/:symbol', requireAuth, (req, res) => {
+    const oldSymbol = req.params.symbol.trim().toUpperCase();
+    const { symbol: newSymbol, description: newDescription } = req.body;
+    
+    if (!newSymbol || !newDescription) {
+        return res.status(400).json({ error: 'Symbol i opis są wymagane.' });
+    }
+    
+    const cleanNewSymbol = newSymbol.trim().toUpperCase();
+    const cleanNewDesc = newDescription.trim();
+    
+    try {
+        const rowAttr = db.prepare("SELECT value FROM config WHERE key = 'course_attributes'").get();
+        let attributes = rowAttr ? JSON.parse(rowAttr.value) : [{ symbol: 'S', description: 'kurs szkolny' }];
+        
+        const attrIndex = attributes.findIndex(attr => attr.symbol === oldSymbol);
+        if (attrIndex === -1) {
+            return res.status(404).json({ error: 'Nie znaleziono atrybutu.' });
+        }
+        
+        if (cleanNewSymbol !== oldSymbol && attributes.some(attr => attr.symbol === cleanNewSymbol)) {
+            return res.status(400).json({ error: 'Atrybut o nowym symbolu już istnieje.' });
+        }
+        
+        // Update attribute details
+        attributes[attrIndex] = { symbol: cleanNewSymbol, description: cleanNewDesc };
+        db.prepare("INSERT INTO config (key, value) VALUES ('course_attributes', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(JSON.stringify(attributes));
+        
+        // If the symbol changed, migrate all courses in the schedule
+        if (cleanNewSymbol !== oldSymbol) {
+            const rowSchedule = db.prepare("SELECT value FROM config WHERE key = 'schedule'").get();
+            if (rowSchedule) {
+                const schedule = JSON.parse(rowSchedule.value);
+                let scheduleModified = false;
+                
+                const renameSymbol = (courses) => {
+                    if (Array.isArray(courses)) {
+                        courses.forEach(course => {
+                            if (Array.isArray(course.notes)) {
+                                const noteIndex = course.notes.indexOf(oldSymbol);
+                                if (noteIndex !== -1) {
+                                    course.notes[noteIndex] = cleanNewSymbol;
+                                    scheduleModified = true;
+                                }
+                            }
+                        });
+                    }
+                };
+                
+                for (const direction in schedule) {
+                    const dirObj = schedule[direction];
+                    for (const dayType in dirObj) {
+                        renameSymbol(dirObj[dayType]);
+                    }
+                }
+                
+                if (scheduleModified) {
+                    db.prepare("INSERT INTO config (key, value) VALUES ('schedule', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(JSON.stringify(schedule));
+                }
+            }
+        }
+        
+        res.json({ success: true, message: 'Atrybut został zaktualizowany.', attributes });
+    } catch (error) {
+        console.error("Błąd aktualizacji atrybutu:", error);
+        res.status(500).json({ error: 'Błąd zapisu.' });
+    }
+});
+
 // --- ADMIN API ---
 
 // Update schedule JSON
@@ -409,6 +590,32 @@ app.post('/api/admin/upload-regulamin', requireAuth, uploadPdf.single('regulamin
     } catch (error) {
         console.error("Błąd podczas wgrywania regulaminu:", error);
         res.status(500).json({ error: 'Wystąpił krytyczny błąd zapisu pliku regulaminu na serwerze (plik może być zablokowany).' });
+    }
+});
+
+// Upload news image
+app.post('/api/admin/upload-news-image', requireAuth, upload.single('image'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'Nie wybrano pliku.' });
+    }
+
+    try {
+        const uploadsDir = path.join(__dirname, 'uploads');
+        if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true });
+        }
+
+        const ext = path.extname(req.file.originalname).toLowerCase() || '.webp';
+        const fileName = `news-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+        const filePath = path.join(uploadsDir, fileName);
+
+        // Save the file
+        fs.writeFileSync(filePath, req.file.buffer);
+
+        res.json({ success: true, url: `/uploads/${fileName}` });
+    } catch (error) {
+        console.error("Błąd podczas wgrywania obrazka:", error);
+        res.status(500).json({ error: 'Wystąpił błąd zapisu pliku na serwerze.' });
     }
 });
 

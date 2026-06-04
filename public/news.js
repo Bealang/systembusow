@@ -46,6 +46,23 @@
 
                     const dateStr = dateObj.toLocaleDateString('pl-PL', { day: 'numeric', month: 'long', year: 'numeric' });
 
+                    // Optimize image tags inside content for Lighthouse / Performance
+                    let optimizedContent = item.content || '';
+                    if (optimizedContent.includes('<img')) {
+                        optimizedContent = optimizedContent.replace(/<img\s([^>]*)/gi, (match, p1) => {
+                            let attrs = p1;
+                            if (!attrs.includes('loading=')) {
+                                attrs = 'loading="lazy" ' + attrs;
+                            }
+                            if (!attrs.includes('class=')) {
+                                attrs = 'class="news-inline-image" ' + attrs;
+                            } else {
+                                attrs = attrs.replace(/class=["']([^"']*)["']/i, 'class="$1 news-inline-image"');
+                            }
+                            return `<img ${attrs}`;
+                        });
+                    }
+
                     return `
                     <div class="news-item reveal reveal-up">
                         <h3 class="news-title">${window.escapeHTML ? window.escapeHTML(item.title) : item.title}</h3>
@@ -55,7 +72,7 @@
                                 ${dateStr}
                             </span>
                         </div>
-                        <div class="news-content-text">${item.content}</div>
+                        <div class="news-content-text">${optimizedContent}</div>
                     </div>
                     `;
                 }).join('');

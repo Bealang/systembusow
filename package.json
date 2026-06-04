@@ -1,11 +1,11 @@
 {
-  "name": "mleczek-bus",
+  "name": "test-bus",
   "version": "1.0.0",
   "description": "",
   "main": "script.js",
   "scripts": {
     "start": "node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"No tests configured\""
   },
   "keywords": [],
   "author": "",

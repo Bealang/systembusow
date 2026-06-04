@@ -4,11 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mleczek Bus - Panel</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap"
-        rel="stylesheet" media="print" onload="this.media='all'">
+    <title>Testbus - Panel</title>
     <link rel="stylesheet" href="/style.css">
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -19,7 +15,7 @@
     <!-- Mobile Header (Visible only on small screens) -->
     <div class="mobile-top-bar">
         <div class="logo">
-            <div class="logo-text">MLECZEK<span>BUS</span></div>
+            <div class="logo-text">TEST<span>BUS</span></div>
         </div>
         <button id="mobile-toggle" class="mobile-toggle">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -36,7 +32,7 @@
         <div class="sidebar-header">
             <div class="logo">
                 <a href="/" style="text-decoration: none;">
-                    <div class="logo-text">MLECZEK<span>BUS</span></div>
+                    <div class="logo-text">TEST<span>BUS</span></div>
                 </a>
             </div>
         </div>
@@ -111,7 +107,7 @@
     <div class="login-screen-wrapper" id="login-screen">
         <div class="login-card">
             <div class="login-logo">
-                <h1>MLECZEK<span>BUS</span></h1>
+                <h1>TEST<span>BUS</span></h1>
             </div>
             <div id="login-alert" class="alert"></div>
             <form id="login-form">
@@ -180,8 +176,8 @@
                     <div class="schedule-filter-group">
                         <label for="schedule-city-select">Kierunek</label>
                         <select id="schedule-city-select">
-                            <option value="myslenice">Z Myślenic</option>
-                            <option value="sulkowice">Z Sułkowic / Harbutowic</option>
+                            <option value="myslenice">Z Miejscowość 1</option>
+                            <option value="sulkowice">Z Miejscowość 2</option>
                         </select>
                     </div>
                     <div class="schedule-filter-group">
@@ -189,6 +185,7 @@
                         <select id="schedule-day-select">
                             <option value="workdays">Poniedziałek - Piątek</option>
                             <option value="saturday">Sobota</option>
+                            <option value="sunday">Niedziele i święta</option>
                         </select>
                     </div>
                     <button type="button" id="load-schedule-view" class="btn-primary">Wczytaj Widok</button>
@@ -214,6 +211,33 @@
                         <button type="button" id="save-schedule-btn" class="btn-primary" style="display: none;">Zapisz
                             zmiany</button>
                     </div>
+                </div>
+            </div>
+
+            <!-- Zarządzanie atrybutami kursów -->
+            <div
+                style="background: white; padding: 25px; border-radius: var(--radius-box); border: 1px solid var(--admin-border); margin-top: 30px;">
+                <h3 style="margin-top: 0;">Oznaczenia kursów</h3>
+                <p style="margin-bottom: 20px; color: var(--text-secondary);">Dodaj nowe oznaczenia, które
+                    możesz przypisać do godzin odjazdów.</p>
+
+                <form id="add-attribute-form"
+                    style="display: flex; gap: 15px; align-items: flex-end; margin-bottom: 25px; flex-wrap: wrap;">
+                    <div class="form-group" style="margin-bottom: 0; min-width: 120px; flex: 1;">
+                        <label for="new-attr-symbol">Symbol (1/2 litery)</label>
+                        <input type="text" id="new-attr-symbol" placeholder="np. HS" required maxlength="5"
+                            style="border: 1px solid #cbd5e1; border-radius: 0;">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0; min-width: 250px; flex: 3;">
+                        <label for="new-attr-desc">Krótki opis</label>
+                        <input type="text" id="new-attr-desc" placeholder="np. kurs szkolny" required
+                            style="border: 1px solid #cbd5e1; border-radius: 0;">
+                    </div>
+                    <button type="submit" class="btn-primary" style="height: 46px;">Dodaj atrybut</button>
+                </form>
+
+                <div id="attributes-list-container">
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Ładowanie atrybutów...</p>
                 </div>
             </div>
         </div>
@@ -291,12 +315,6 @@
                 </div>
             </div>
 
-            <div style="margin-top: 20px;">
-                <button type="button" id="recalculate-monthly-btn"
-                    style="border: 1px solid #ccc; background: #fff; padding: 8px 12px; cursor: pointer;">
-                    [Tymczasowy] Ustaw ceny biletów miesięcznych dla wszystkich relacji na podstawie cen jednorazowych
-                </button>
-            </div>
         </div>
 
         <!-- Obsługa Aktualności -->
@@ -389,19 +407,9 @@
                 </div>
                 <div class="form-group">
                     <label>Warianty Kursu</label>
-                    <div class="schedule-tags-wrap" style="background: transparent; border: none; padding: 0;">
-                        <label class="variant-tag tag-s">
-                            <input type="checkbox" id="new-course-s">
-                            <span>Szkolny (S)</span>
-                        </label>
-                        <label class="variant-tag tag-rd">
-                            <input type="checkbox" id="new-course-rd">
-                            <span>Rudnik (RD)</span>
-                        </label>
-                        <label class="variant-tag tag-h">
-                            <input type="checkbox" id="new-course-h">
-                            <span>Harbutowice (H)</span>
-                        </label>
+                    <div class="schedule-tags-wrap" id="modal-attributes-container"
+                        style="background: transparent; border: none; padding: 0;">
+                        <!-- Dynamicznie ładowane atrybuty -->
                     </div>
                 </div>
             </div>
@@ -412,7 +420,7 @@
     </div>
 
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-    <script src="/admin.js"></script>
+    <script src="/admin.js?v=<%= Date.now() %>"></script>
 </body>
 
 </html>

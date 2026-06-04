@@ -1,0 +1,430 @@
+<%- include('partials/header') %>
+
+    <main class="main-content" style="min-height: 70vh;">
+        <section class="pricing-section bg-light">
+            <div class="container">
+                <div class="section-header reveal reveal-up reveal-visible">
+                    <h1 class="section-title">Rozkład Jazdy</h1>
+                    <div class="title-underline"></div>
+                </div>
+
+                <div class="schedule-page-grid reveal reveal-up reveal-visible">
+                    <!-- Column 1: departures from X -->
+                    <div class="schedule-column">
+                        <h2 class="schedule-column-title">z X do Y<h2>
+
+                                <!-- Dni robocze -->
+                                <div class="schedule-day-section">
+                                    <% const mWorkdays=(schedule && schedule.myslenice && schedule.myslenice.workdays) ?
+                                        schedule.myslenice.workdays : []; const C_w=3; const
+                                        R_w=Math.ceil(mWorkdays.length / C_w); %>
+                                        <details class="schedule-details" open>
+                                            <summary class="schedule-summary">
+                                                <span>Poniedziałek - Piątek (dni robocze)</span>
+                                                <svg class="chevron" viewBox="0 0 24 24"
+                                                    xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M7 10l5 5 5-5z" />
+                                                </svg>
+                                            </summary>
+                                            <div class="schedule-table-wrapper">
+                                                <table class="schedule-table">
+                                                    <tbody>
+                                                        <% if (mWorkdays.length> 0) { %>
+                                                            <% for (let r=0; r < R_w; r++) { %>
+                                                                <tr>
+                                                                    <% for (let c=0; c < C_w; c++) { %>
+                                                                        <% const idx=c * R_w + r; %>
+                                                                            <td>
+                                                                                <% if (idx < mWorkdays.length) { %>
+                                                                                    <span class="time-val">
+                                                                                        <%= mWorkdays[idx].time %>
+                                                                                    </span>
+                                                                                    <% if (mWorkdays[idx].notes &&
+                                                                                        mWorkdays[idx].notes.length> 0)
+                                                                                        { %>
+                                                                                        <%
+                                                                                            mWorkdays[idx].notes.forEach(note=>
+                                                                                            { %>
+                                                                                            <% if (attributes.some(a=>
+                                                                                                a.symbol === note)) { %>
+                                                                                                <span class="attr-tag">
+                                                                                                    <%= note %>
+                                                                                                </span>
+                                                                                                <% } %>
+                                                                                                    <% }) %>
+                                                                                                        <% } %>
+                                                                                                            <% } else {
+                                                                                                                %>
+                                                                                                                <span
+                                                                                                                    class="no-time">-</span>
+                                                                                                                <% } %>
+                                                                            </td>
+                                                                            <% } %>
+                                                                </tr>
+                                                                <% } %>
+                                                                    <% } else { %>
+                                                                        <tr>
+                                                                            <td colspan="<%= C_w %>"
+                                                                                class="no-courses-cell">Brak
+                                                                                zaplanowanych kursów.</td>
+                                                                        </tr>
+                                                                        <% } %>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </details>
+                                </div>
+
+                                <!-- Soboty -->
+                                <div class="schedule-day-section">
+                                    <% const mSaturday=(schedule && schedule.myslenice && schedule.myslenice.saturday) ?
+                                        schedule.myslenice.saturday : []; const C_s=3; const
+                                        R_s=Math.ceil(mSaturday.length / C_s); %>
+                                        <details class="schedule-details" open>
+                                            <summary class="schedule-summary">
+                                                <span>Soboty</span>
+                                                <svg class="chevron" viewBox="0 0 24 24"
+                                                    xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M7 10l5 5 5-5z" />
+                                                </svg>
+                                            </summary>
+                                            <div class="schedule-table-wrapper">
+                                                <table class="schedule-table">
+                                                    <tbody>
+                                                        <% if (mSaturday.length> 0) { %>
+                                                            <% for (let r=0; r < R_s; r++) { %>
+                                                                <tr>
+                                                                    <% for (let c=0; c < C_s; c++) { %>
+                                                                        <% const idx=c * R_s + r; %>
+                                                                            <td>
+                                                                                <% if (idx < mSaturday.length) { %>
+                                                                                    <span class="time-val">
+                                                                                        <%= mSaturday[idx].time %>
+                                                                                    </span>
+                                                                                    <% if (mSaturday[idx].notes &&
+                                                                                        mSaturday[idx].notes.length> 0)
+                                                                                        { %>
+                                                                                        <%
+                                                                                            mSaturday[idx].notes.forEach(note=>
+                                                                                            { %>
+                                                                                            <% if (attributes.some(a=>
+                                                                                                a.symbol === note)) { %>
+                                                                                                <span class="attr-tag">
+                                                                                                    <%= note %>
+                                                                                                </span>
+                                                                                                <% } %>
+                                                                                                    <% }) %>
+                                                                                                        <% } %>
+                                                                                                            <% } else {
+                                                                                                                %>
+                                                                                                                <span
+                                                                                                                    class="no-time">-</span>
+                                                                                                                <% } %>
+                                                                            </td>
+                                                                            <% } %>
+                                                                </tr>
+                                                                <% } %>
+                                                                    <% } else { %>
+                                                                        <tr>
+                                                                            <td colspan="<%= C_s %>"
+                                                                                class="no-courses-cell">Brak
+                                                                                zaplanowanych kursów.</td>
+                                                                        </tr>
+                                                                        <% } %>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </details>
+                                </div>
+
+                                <!-- Niedziele -->
+                                <div class="schedule-day-section">
+                                    <% const mSunday=(schedule && schedule.myslenice && schedule.myslenice.sunday) ?
+                                        schedule.myslenice.sunday : []; const C_su=3; const
+                                        R_su=Math.ceil(mSunday.length / C_su); %>
+                                        <details class="schedule-details" open>
+                                            <summary class="schedule-summary">
+                                                <span>Niedziele i święta</span>
+                                                <svg class="chevron" viewBox="0 0 24 24"
+                                                    xmlns="http://www.w3.org/2000/svg">
+                                                    <path d="M7 10l5 5 5-5z" />
+                                                </svg>
+                                            </summary>
+                                            <div class="schedule-table-wrapper">
+                                                <table class="schedule-table">
+                                                    <tbody>
+                                                        <% if (mSunday.length> 0) { %>
+                                                            <% for (let r=0; r < R_su; r++) { %>
+                                                                <tr>
+                                                                    <% for (let c=0; c < C_su; c++) { %>
+                                                                        <% const idx=c * R_su + r; %>
+                                                                            <td>
+                                                                                <% if (idx < mSunday.length) { %>
+                                                                                    <span class="time-val">
+                                                                                        <%= mSunday[idx].time %>
+                                                                                    </span>
+                                                                                    <% if (mSunday[idx].notes &&
+                                                                                        mSunday[idx].notes.length> 0) {
+                                                                                        %>
+                                                                                        <%
+                                                                                            mSunday[idx].notes.forEach(note=>
+                                                                                            { %>
+                                                                                            <% if (attributes.some(a=>
+                                                                                                a.symbol === note)) { %>
+                                                                                                <span class="attr-tag">
+                                                                                                    <%= note %>
+                                                                                                </span>
+                                                                                                <% } %>
+                                                                                                    <% }) %>
+                                                                                                        <% } %>
+                                                                                                            <% } else {
+                                                                                                                %>
+                                                                                                                <span
+                                                                                                                    class="no-time">-</span>
+                                                                                                                <% } %>
+                                                                            </td>
+                                                                            <% } %>
+                                                                </tr>
+                                                                <% } %>
+                                                                    <% } else { %>
+                                                                        <tr>
+                                                                            <td colspan="<%= C_su %>"
+                                                                                class="no-courses-cell">Brak
+                                                                                zaplanowanych kursów.</td>
+                                                                        </tr>
+                                                                        <% } %>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </details>
+                                </div>
+                    </div>
+
+                    <!-- Column 2: departures from Sułkowice (direction sulkowice) -->
+                    <div class="schedule-column">
+                        <h2 class="schedule-column-title">z Y do Z</h2>
+
+                        <!-- Dni robocze -->
+                        <div class="schedule-day-section">
+                            <% const sWorkdays=(schedule && schedule.sulkowice && schedule.sulkowice.workdays) ?
+                                schedule.sulkowice.workdays : []; const sC_w=3; const sR_w=Math.ceil(sWorkdays.length /
+                                sC_w); %>
+                                <details class="schedule-details" open>
+                                    <summary class="schedule-summary">
+                                        <span>Poniedziałek - Piątek (dni robocze)</span>
+                                        <svg class="chevron" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M7 10l5 5 5-5z" />
+                                        </svg>
+                                    </summary>
+                                    <div class="schedule-table-wrapper">
+                                        <table class="schedule-table">
+                                            <tbody>
+                                                <% if (sWorkdays.length> 0) { %>
+                                                    <% for (let r=0; r < sR_w; r++) { %>
+                                                        <tr>
+                                                            <% for (let c=0; c < sC_w; c++) { %>
+                                                                <% const idx=c * sR_w + r; %>
+                                                                    <td>
+                                                                        <% if (idx < sWorkdays.length) { %>
+                                                                            <span class="time-val">
+                                                                                <%= sWorkdays[idx].time %>
+                                                                            </span>
+                                                                            <% if (sWorkdays[idx].notes &&
+                                                                                sWorkdays[idx].notes.length> 0) { %>
+                                                                                <% sWorkdays[idx].notes.forEach(note=> {
+                                                                                    %>
+                                                                                    <% if (attributes.some(a=> a.symbol
+                                                                                        === note)) { %>
+                                                                                        <span class="attr-tag">
+                                                                                            <%= note %>
+                                                                                        </span>
+                                                                                        <% } %>
+                                                                                            <% }) %>
+                                                                                                <% } %>
+                                                                                                    <% } else { %>
+                                                                                                        <span
+                                                                                                            class="no-time">-</span>
+                                                                                                        <% } %>
+                                                                    </td>
+                                                                    <% } %>
+                                                        </tr>
+                                                        <% } %>
+                                                            <% } else { %>
+                                                                <tr>
+                                                                    <td colspan="<%= sC_w %>" class="no-courses-cell">
+                                                                        Brak zaplanowanych kursów.</td>
+                                                                </tr>
+                                                                <% } %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </details>
+                        </div>
+
+                        <!-- Soboty -->
+                        <div class="schedule-day-section">
+                            <% const sSaturday=(schedule && schedule.sulkowice && schedule.sulkowice.saturday) ?
+                                schedule.sulkowice.saturday : []; const sC_s=3; const sR_s=Math.ceil(sSaturday.length /
+                                sC_s); %>
+                                <details class="schedule-details" open>
+                                    <summary class="schedule-summary">
+                                        <span>Soboty</span>
+                                        <svg class="chevron" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M7 10l5 5 5-5z" />
+                                        </svg>
+                                    </summary>
+                                    <div class="schedule-table-wrapper">
+                                        <table class="schedule-table">
+                                            <tbody>
+                                                <% if (sSaturday.length> 0) { %>
+                                                    <% for (let r=0; r < sR_s; r++) { %>
+                                                        <tr>
+                                                            <% for (let c=0; c < sC_s; c++) { %>
+                                                                <% const idx=c * sR_s + r; %>
+                                                                    <td>
+                                                                        <% if (idx < sSaturday.length) { %>
+                                                                            <span class="time-val">
+                                                                                <%= sSaturday[idx].time %>
+                                                                            </span>
+                                                                            <% if (sSaturday[idx].notes &&
+                                                                                sSaturday[idx].notes.length> 0) { %>
+                                                                                <% sSaturday[idx].notes.forEach(note=> {
+                                                                                    %>
+                                                                                    <% if (attributes.some(a=> a.symbol
+                                                                                        === note)) { %>
+                                                                                        <span class="attr-tag">
+                                                                                            <%= note %>
+                                                                                        </span>
+                                                                                        <% } %>
+                                                                                            <% }) %>
+                                                                                                <% } %>
+                                                                                                    <% } else { %>
+                                                                                                        <span
+                                                                                                            class="no-time">-</span>
+                                                                                                        <% } %>
+                                                                    </td>
+                                                                    <% } %>
+                                                        </tr>
+                                                        <% } %>
+                                                            <% } else { %>
+                                                                <tr>
+                                                                    <td colspan="<%= sC_s %>" class="no-courses-cell">
+                                                                        Brak zaplanowanych kursów.</td>
+                                                                </tr>
+                                                                <% } %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </details>
+                        </div>
+
+                        <!-- Niedziele -->
+                        <div class="schedule-day-section">
+                            <% const sSunday=(schedule && schedule.sulkowice && schedule.sulkowice.sunday) ?
+                                schedule.sulkowice.sunday : []; const sC_su=3; const sR_su=Math.ceil(sSunday.length /
+                                sC_su); %>
+                                <details class="schedule-details" open>
+                                    <summary class="schedule-summary">
+                                        <span>Niedziele i święta</span>
+                                        <svg class="chevron" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M7 10l5 5 5-5z" />
+                                        </svg>
+                                    </summary>
+                                    <div class="schedule-table-wrapper">
+                                        <table class="schedule-table">
+                                            <tbody>
+                                                <% if (sSunday.length> 0) { %>
+                                                    <% for (let r=0; r < sR_su; r++) { %>
+                                                        <tr>
+                                                            <% for (let c=0; c < sC_su; c++) { %>
+                                                                <% const idx=c * sR_su + r; %>
+                                                                    <td>
+                                                                        <% if (idx < sSunday.length) { %>
+                                                                            <span class="time-val">
+                                                                                <%= sSunday[idx].time %>
+                                                                            </span>
+                                                                            <% if (sSunday[idx].notes &&
+                                                                                sSunday[idx].notes.length> 0) { %>
+                                                                                <% sSunday[idx].notes.forEach(note=> {
+                                                                                    %>
+                                                                                    <% if (attributes.some(a=> a.symbol
+                                                                                        === note)) { %>
+                                                                                        <span class="attr-tag">
+                                                                                            <%= note %>
+                                                                                        </span>
+                                                                                        <% } %>
+                                                                                            <% }) %>
+                                                                                                <% } %>
+                                                                                                    <% } else { %>
+                                                                                                        <span
+                                                                                                            class="no-time">-</span>
+                                                                                                        <% } %>
+                                                                    </td>
+                                                                    <% } %>
+                                                        </tr>
+                                                        <% } %>
+                                                            <% } else { %>
+                                                                <tr>
+                                                                    <td colspan="<%= sC_su %>" class="no-courses-cell">
+                                                                        Brak zaplanowanych kursów.</td>
+                                                                </tr>
+                                                                <% } %>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </details>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Attributes Legend -->
+                <% if (attributes && attributes.length> 0) { %>
+                    <div class="schedule-legend-container reveal reveal-up reveal-visible">
+                        <h4 class="legend-header">Objaśnienia oznaczeń:</h4>
+                        <ul class="legend-list">
+                            <% attributes.forEach(attr=> { %>
+                                <li>
+                                    <span class="badge">
+                                        <%= attr.symbol %>
+                                    </span>
+                                    <span class="legend-desc">- <%= attr.description %></span>
+                                </li>
+                                <% }) %>
+                        </ul>
+                    </div>
+                    <% } %>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const getIsMobile = () => window.innerWidth <= 768;
+            let isMobile = getIsMobile();
+
+            function updateDetailsState(mobile) {
+                const detailsElements = document.querySelectorAll('.schedule-details');
+                detailsElements.forEach(details => {
+                    if (mobile) {
+                        details.removeAttribute('open');
+                    } else {
+                        details.setAttribute('open', '');
+                    }
+                });
+            }
+
+            // Initial state based on current viewport
+            updateDetailsState(isMobile);
+
+            // Listen to resize events to automatically toggle state when crossing the boundary
+            window.addEventListener('resize', () => {
+                const currentMobile = getIsMobile();
+                if (currentMobile !== isMobile) {
+                    isMobile = currentMobile;
+                    updateDetailsState(isMobile);
+                }
+            });
+        });
+    </script>
+
+    <%- include('partials/footer') %>

@@ -4,4 +4,4 @@ Disallow: /admin.html
 Disallow: /admin.js
 Disallow: /admin.css
 
-Sitemap: https://mleczekbus.pl/sitemap.xml
+Sitemap: https://testbus.pl/sitemap.xml

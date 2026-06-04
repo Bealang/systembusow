@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
-
 :root {
     --admin-bg: #f1f5f9;
     --admin-surface: #ffffff;
@@ -19,7 +17,7 @@
 
 body {
     background-color: var(--admin-bg);
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-weight: 500;
     color: var(--admin-text);
     margin: 0;
@@ -31,7 +29,7 @@ body {
 }
 
 * {
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-weight: 500;
 }
 
@@ -129,7 +127,7 @@ h2,
 h3 {
     color: var(--admin-primary);
     margin-top: 0;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-weight: 800;
 }
 
@@ -207,7 +205,7 @@ h3 {
     display: flex;
     align-items: center;
     gap: 14px;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     text-align: left;
     width: 100%;
     position: relative;
@@ -720,21 +718,7 @@ h3 {
     box-shadow: 0 2px 4px rgba(11, 31, 56, 0.15);
 }
 
-/* Specific tag colors when checked (optional, but looks nice) */
-.variant-tag.tag-s input:checked+span {
-    background: #3b82f6;
-    border-color: #3b82f6;
-}
 
-.variant-tag.tag-rd input:checked+span {
-    background: #10b981;
-    border-color: #10b981;
-}
-
-.variant-tag.tag-h input:checked+span {
-    background: #8b5cf6;
-    border-color: #8b5cf6;
-}
 
 .schedule-row .rm-row {
     margin-left: auto;
@@ -783,7 +767,7 @@ h3 {
     border: 2px dashed #cbd5e1;
     padding: 12px 24px;
     border-radius: 0;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Poppins', sans-serif;
     font-size: 0.95rem;
     font-weight: 800;
     cursor: pointer;
@@ -1078,7 +1062,8 @@ h3 {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(5, 11, 20, 0.4);
+    background-color: rgba(5, 11, 20, 0.4); /* Fallback */
+    background-color: color-mix(in srgb, var(--admin-primary, #050b14) 40%, transparent);
     backdrop-filter: blur(8px);
     align-items: center;
     justify-content: center;
@@ -1173,4 +1158,31 @@ h3 {
 /* KEEP radius for tags as requested */
 .variant-tag span {
     border-radius: 50px !important;
+}
+
+/* --- News Quill Image Resizer --- */
+.quill-image-resizer-overlay {
+    box-sizing: border-box;
+}
+
+.quill-image-resizer-handle {
+    box-sizing: border-box;
+    transition: transform 0.1s ease;
+}
+
+.quill-image-resizer-handle:hover {
+    transform: scale(1.3);
+}
+
+.ql-editor img {
+    max-width: 100%;
+    height: auto;
+    cursor: pointer;
+    display: inline-block;
+    vertical-align: middle;
+    transition: box-shadow 0.2s;
+}
+
+.ql-editor img:hover {
+    box-shadow: 0 0 0 2px var(--primary-color, #2563eb);
 }

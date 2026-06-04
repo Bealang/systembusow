@@ -1,12 +1,12 @@
 // ============================================================================
-// MLECZEK BUS - Pricing Calculator Module (calculator.js)
+// Testbus - Pricing Calculator Module (calculator.js)
 // Lazily loads stops database, handles searches, select UI, and price calculation
 // ============================================================================
 
 (function() {
     let allStopsClient = [];
     let lastFetchedPrice = null;
-    let currentPriceType = localStorage.getItem('mleczek_price_type') || 'normal';
+    let currentPriceType = localStorage.getItem('testbus_price_type') || 'normal';
 
     function initCalculator() {
         const calcFrom = document.getElementById('calc-from');
@@ -75,7 +75,7 @@
         async function fetchPricingData() {
             try {
                 if (window.fetchWithCache) {
-                    const data = await window.fetchWithCache('/api/stops', 'mleczek_stops', 86400000);
+                    const data = await window.fetchWithCache('/api/stops', 'przystanki', 86400000);
                     allStopsClient = data.stops;
                     populateCalculatorStops();
                 }
@@ -165,7 +165,7 @@
             if (!btn) return;
             btn.addEventListener('click', () => {
                 currentPriceType = btn.id === 'toggle-normal' ? 'normal' : 'reduced';
-                localStorage.setItem('mleczek_price_type', currentPriceType);
+                localStorage.setItem('testbus_price_type', currentPriceType);
                 updatePriceDisplay();
             });
         });
