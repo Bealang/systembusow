@@ -1,7 +1,7 @@
 @echo off
-title Serwer Testbus
+title Serwer Bodzio bus
 echo =======================================
-echo    Uruchamianie serwera Testbus
+echo    Uruchamianie serwera BodzioBUS
 echo =======================================
 echo.
 node server.js

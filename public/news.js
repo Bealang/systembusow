@@ -128,6 +128,36 @@
                         }
                     }
                 });
+
+                // Input pagination handling (Enter key)
+                paginationContainer.addEventListener('keydown', (e) => {
+                    if (e.target.id === 'pagination-page-input' && e.key === 'Enter') {
+                        let targetPage = parseInt(e.target.value);
+                        const totalPages = Math.ceil(totalNewsCount / newsPerPage);
+                        if (!isNaN(targetPage)) {
+                            if (targetPage < 1) targetPage = 1;
+                            if (targetPage > totalPages) targetPage = totalPages;
+                            renderNewsPage(targetPage);
+                        }
+                    }
+                });
+
+                // Input pagination handling (blur / change event)
+                paginationContainer.addEventListener('change', (e) => {
+                    if (e.target.id === 'pagination-page-input') {
+                        let targetPage = parseInt(e.target.value);
+                        const totalPages = Math.ceil(totalNewsCount / newsPerPage);
+                        if (!isNaN(targetPage)) {
+                            if (targetPage < 1) targetPage = 1;
+                            if (targetPage > totalPages) targetPage = totalPages;
+                            if (targetPage !== currentPage) {
+                                renderNewsPage(targetPage);
+                            }
+                        } else {
+                            e.target.value = currentPage;
+                        }
+                    }
+                });
             }
 
             if (totalPages <= 1) {
@@ -138,22 +168,15 @@
             let html = `
                 <div class="pagination-controls">
                     <button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} data-page="${currentPage - 1}" aria-label="Poprzednia strona">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        <span class="pagination-btn-text">Poprzednia</span>
                     </button>
-            `;
-
-            const range = 1;
-            for (let i = 1; i <= totalPages; i++) {
-                if (i === 1 || i === totalPages || (i >= currentPage - range && i <= currentPage + range)) {
-                    html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
-                } else if (i === currentPage - range - 1 || i === currentPage + range + 1) {
-                    html += `<span class="pagination-ellipsis">...</span>`;
-                }
-            }
-
-            html += `
+                    <label for="pagination-page-input" class="pagination-info">
+                        Strona <input type="number" id="pagination-page-input" class="pagination-input" value="${currentPage}" min="1" max="${totalPages}"> z ${totalPages}
+                    </label>
                     <button class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''} data-page="${currentPage + 1}" aria-label="Następna strona">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                        <span class="pagination-btn-text">Następna</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left: 6px;"><polyline points="9 18 15 12 9 6"></polyline></svg>
                     </button>
                 </div>
             `;

@@ -1,5 +1,5 @@
 {
-  "name": "test-bus",
+  "name": "bodzio",
   "version": "1.0.0",
   "description": "",
   "main": "script.js",
@@ -14,6 +14,7 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "better-sqlite3": "^12.9.0",
+    "compression": "^1.8.1",
     "connect-sqlite3": "^0.9.16",
     "dotenv": "^17.4.2",
     "ejs": "^6.0.1",

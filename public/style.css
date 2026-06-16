@@ -7,6 +7,7 @@
     src: url('/fonts/poppins-latin-ext-300-normal.woff2') format('woff2');
     unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
+
 /* latin */
 @font-face {
     font-family: 'Poppins';
@@ -16,6 +17,7 @@
     src: url('/fonts/poppins-latin-300-normal.woff2') format('woff2');
     unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
+
 /* latin-ext */
 @font-face {
     font-family: 'Poppins';
@@ -25,6 +27,7 @@
     src: url('/fonts/poppins-latin-ext-400-normal.woff2') format('woff2');
     unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
+
 /* latin */
 @font-face {
     font-family: 'Poppins';
@@ -34,6 +37,7 @@
     src: url('/fonts/poppins-latin-400-normal.woff2') format('woff2');
     unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
+
 /* latin-ext */
 @font-face {
     font-family: 'Poppins';
@@ -43,6 +47,7 @@
     src: url('/fonts/poppins-latin-ext-500-normal.woff2') format('woff2');
     unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
+
 /* latin */
 @font-face {
     font-family: 'Poppins';
@@ -52,6 +57,7 @@
     src: url('/fonts/poppins-latin-500-normal.woff2') format('woff2');
     unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
+
 /* latin-ext */
 @font-face {
     font-family: 'Poppins';
@@ -61,6 +67,7 @@
     src: url('/fonts/poppins-latin-ext-600-normal.woff2') format('woff2');
     unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
+
 /* latin */
 @font-face {
     font-family: 'Poppins';
@@ -70,6 +77,7 @@
     src: url('/fonts/poppins-latin-600-normal.woff2') format('woff2');
     unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
+
 /* latin-ext */
 @font-face {
     font-family: 'Poppins';
@@ -79,6 +87,7 @@
     src: url('/fonts/poppins-latin-ext-700-normal.woff2') format('woff2');
     unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
+
 /* latin */
 @font-face {
     font-family: 'Poppins';
@@ -88,6 +97,7 @@
     src: url('/fonts/poppins-latin-700-normal.woff2') format('woff2');
     unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
+
 /* latin-ext */
 @font-face {
     font-family: 'Poppins';
@@ -97,6 +107,7 @@
     src: url('/fonts/poppins-latin-ext-800-normal.woff2') format('woff2');
     unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
+
 /* latin */
 @font-face {
     font-family: 'Poppins';
@@ -456,7 +467,8 @@ section[id] {
     justify-content: center;
     transition: background-color 0.3s ease, color 0.3s ease;
     box-shadow: none;
-    border-left: 1px solid rgba(10, 25, 49, 0.15); /* Separator line between buttons */
+    border-left: 1px solid rgba(10, 25, 49, 0.15);
+    /* Separator line between buttons */
 }
 
 .btn-primary-square:hover {
@@ -1395,18 +1407,20 @@ section[id] {
     .nav-links {
         position: fixed;
         top: 80px;
-        left: -100%;
+        right: 0;
         width: 100%;
         height: calc(100vh - 80px);
         background-color: var(--primary-color);
         flex-direction: column;
         justify-content: flex-start;
         padding-top: 40px;
-        transition: left 0.4s ease;
+        transform: translateX(100%);
+        transition: transform 0.4s ease;
+        will-change: transform;
     }
 
     .nav-links.active {
-        left: 0;
+        transform: translateX(0);
     }
 
     .hero h1 {
@@ -1596,7 +1610,6 @@ section[id] {
     align-items: center;
     justify-content: center;
     gap: 0;
-    /* Removing gap to make them connected if desired, or keep small gap */
     flex-wrap: wrap;
 }
 
@@ -1604,15 +1617,15 @@ section[id] {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 46px;
-    /* Changed from min-width to width for total stability */
+    min-width: 46px;
+    width: auto;
     height: 46px;
-    padding: 0;
+    padding: 0 18px;
     border: 2px solid var(--border-color);
     background: var(--surface-color);
     color: var(--primary-color);
     font-family: inherit;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 700;
     border-radius: 0;
     cursor: pointer;
@@ -1641,18 +1654,48 @@ section[id] {
     background-color: #f1f5f9;
 }
 
-.pagination-ellipsis {
-    display: flex;
+.pagination-info {
+    display: inline-flex;
     align-items: center;
-    justify-content: center;
-    width: 46px;
-    /* Match button width */
-    height: 46px;
-    color: var(--text-secondary);
+    gap: 8px;
     font-weight: 700;
-    border: 2px solid transparent;
-    /* Match button border for alignment */
-    margin: 0 -1px;
+    color: var(--text-primary);
+    padding: 0 16px;
+    font-size: 1rem;
+    user-select: none;
+}
+
+.pagination-input {
+    width: 60px;
+    height: 46px;
+    padding: 0 5px;
+    border: 2px solid var(--border-color);
+    background: var(--surface-color);
+    color: var(--primary-color);
+    font-family: inherit;
+    font-size: 1.05rem;
+    font-weight: 700;
+    text-align: center;
+    border-radius: 0;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    margin: 0 4px;
+}
+
+.pagination-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.08);
+}
+
+/* Hide spin buttons in input[type=number] */
+.pagination-input::-webkit-outer-spin-button,
+.pagination-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.pagination-input[type=number] {
+    -moz-appearance: textfield;
 }
 
 /* Cookie Banner Styles */
@@ -1749,13 +1792,35 @@ section[id] {
 
 @media (max-width: 640px) {
     .pagination-container {
-        gap: 16px;
+        gap: 12px;
     }
 
     .pagination-btn {
         min-width: 40px;
+        width: 40px;
         height: 40px;
+        padding: 0;
+    }
+
+    .pagination-btn-text {
+        display: none;
+    }
+
+    .pagination-btn svg {
+        margin: 0 !important;
+    }
+
+    .pagination-info {
         font-size: 0.9rem;
+        padding: 0 8px;
+        gap: 6px;
+    }
+
+    .pagination-input {
+        width: 50px;
+        height: 40px;
+        font-size: 0.95rem;
+        margin: 0 2px;
     }
 }
 
@@ -1802,7 +1867,10 @@ section[id] {
     }
 }
 
-input, select, button, textarea {
+input,
+select,
+button,
+textarea {
     font-family: 'Poppins', sans-serif;
 }
 
@@ -1893,15 +1961,17 @@ input, select, button, textarea {
     font-size: 1.05rem;
     vertical-align: middle;
     text-align: center;
+    transition: background-color 0.15s ease;
+}
+
+.schedule-table tbody td:not(:last-child) {
+    border-right: 1px solid var(--border-color);
 }
 
 .schedule-table tbody tr:nth-child(even) {
     background-color: #f8fafc;
 }
 
-.schedule-table tbody tr:hover {
-    background-color: #f1f5f9;
-}
 
 .time-val {
     font-weight: 700;
@@ -1957,6 +2027,7 @@ input, select, button, textarea {
         pointer-events: none;
         cursor: default;
     }
+
     .schedule-summary .chevron {
         display: none;
     }
@@ -1966,7 +2037,7 @@ input, select, button, textarea {
     .schedule-page-grid {
         gap: 30px;
     }
-    
+
     .schedule-column {
         padding: 20px;
     }
@@ -1977,16 +2048,16 @@ input, select, button, textarea {
         grid-template-columns: 1fr;
         gap: 30px;
     }
-    
+
     .schedule-summary {
         cursor: pointer;
         transition: background-color 0.2s ease;
     }
-    
+
     .schedule-summary:hover {
         background-color: var(--primary-hover);
     }
-    
+
     .schedule-summary .chevron {
         width: 32px;
         height: 32px;

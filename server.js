@@ -1,4 +1,5 @@
 const express = require('express');
+const compression = require('compression');
 const session = require('express-session');
 const SQLiteStore = require('connect-sqlite3')(session);
 const bcrypt = require('bcryptjs');
@@ -11,10 +12,11 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
+app.use(compression());
 const PORT = process.env.PORT || 3000;
 
 // Configuration
-const ADMIN_USER = 'bealang';
+const ADMIN_USER = 'ostafinbodzio';
 const ADMIN_HASH = (process.env.ADMIN_HASH_B64
     ? Buffer.from(process.env.ADMIN_HASH_B64, 'base64').toString()
     : process.env.ADMIN_HASH || '').trim();
@@ -89,9 +91,9 @@ app.get('/index', (req, res) => {
 // --- Page Render Routes ---
 app.get('/', (req, res) => {
     res.render('index', {
-        title: 'TestBUS | Przewozy osób',
-        description: 'Szukasz busa? Oferujemy regularne przewozy pasażerskie. Sprawdź aktualny rozkład jazdy online!',
-        keywords: 'rozklad jazdy, bus cennik, busy, przewoz osob, bilety miesieczne',
+        title: 'Bodzio - Busy Sułkowice Kraków',
+        description: 'Szukasz busa do Krakowa? Oferujemy regularne przewozy pasażerskie. Sprawdź aktualny rozkład jazdy online!',
+        keywords: 'rozklad jazdy, bus cennik, busy, przewoz osob, bilety miesieczne, bus kraków, busy sułkowice',
         activePage: 'home',
         isHome: true
     });
@@ -99,7 +101,7 @@ app.get('/', (req, res) => {
 
 app.get('/cennik', (req, res) => {
     res.render('cennik', {
-        title: 'TestBUS - Cennik',
+        title: 'Bodzio - Cennik',
         description: 'Sprawdź ceny biletów jednorazowych oraz miesięcznych dla wszystkich połączeń.',
         keywords: 'cennik busy, ceny biletów, bilet miesięczny',
         activePage: 'cennik',
@@ -109,8 +111,8 @@ app.get('/cennik', (req, res) => {
 
 app.get('/kontakt', (req, res) => {
     res.render('kontakt', {
-        title: 'TestBUS - Kontakt',
-        description: 'Skontaktuj się z nami. Dane kontaktowe, adres i numer telefonu.',
+        title: 'Bodzio - Kontakt',
+        description: 'Skontaktuj się z nami. Dane firmy, numer telefonu.',
         keywords: 'kontakt, telefon',
         activePage: 'kontakt',
         isHome: false
@@ -119,7 +121,7 @@ app.get('/kontakt', (req, res) => {
 
 app.get('/prywatnosc', (req, res) => {
     res.render('prywatnosc', {
-        title: 'TestBUS - Polityka Prywatności',
+        title: 'Bodzio - Polityka prywatności',
         description: 'Polityka prywatności serwisu. Dowiedz się, jak dbamy o Twoje dane.',
         keywords: '',
         activePage: 'prywatnosc',
@@ -136,7 +138,7 @@ app.get('/rozklad', (req, res) => {
         const attributes = attrRow ? JSON.parse(attrRow.value) : [];
 
         res.render('rozklad', {
-            title: 'TestBUS - Rozkład Jazdy',
+            title: 'Bodzio - Rozkład Jazdy',
             description: 'Sprawdź aktualny rozkład jazdy busów. Godziny odjazdów i szczegóły połączeń.',
             keywords: 'rozklad jazdy, odjazdy, busy, przewozy',
             activePage: 'rozklad',
@@ -355,7 +357,7 @@ app.get('/api/attributes', (req, res) => {
             res.json(defaults);
         }
     } catch (error) {
-        console.error("Błąd pobierania atrybutów:", error);
+        console.error("Błąd pobierania oznaczeń:", error);
         res.status(500).json({ error: 'Błąd serwera.' });
     }
 });
@@ -373,14 +375,14 @@ app.post('/api/admin/attributes', requireAuth, (req, res) => {
         let attributes = row ? JSON.parse(row.value) : [{ symbol: 'S', description: 'kurs szkolny' }];
 
         if (attributes.some(attr => attr.symbol === cleanSymbol)) {
-            return res.status(400).json({ error: 'Atrybut o tym symbolu już istnieje.' });
+            return res.status(400).json({ error: 'Oznaczenie o tym symbolu już istnieje.' });
         }
 
         attributes.push({ symbol: cleanSymbol, description: cleanDesc });
         db.prepare("INSERT INTO config (key, value) VALUES ('course_attributes', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(JSON.stringify(attributes));
-        res.json({ success: true, message: 'Dodano atrybut.', attributes });
+        res.json({ success: true, message: 'Dodano oznaczenie', attributes });
     } catch (error) {
-        console.error("Błąd zapisu atrybutu:", error);
+        console.error("Błąd zapisu oznaczenia:", error);
         res.status(500).json({ error: 'Błąd zapisu.' });
     }
 });
@@ -394,13 +396,13 @@ app.delete('/api/admin/attributes/:symbol', requireAuth, (req, res) => {
 
         attributes = attributes.filter(attr => attr.symbol !== symbolToDelete);
         db.prepare("INSERT INTO config (key, value) VALUES ('course_attributes', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(JSON.stringify(attributes));
-        
+
         // Also remove the deleted attribute from all courses in the schedule
         const rowSchedule = db.prepare("SELECT value FROM config WHERE key = 'schedule'").get();
         if (rowSchedule) {
             const schedule = JSON.parse(rowSchedule.value);
             let scheduleModified = false;
-            
+
             const removeSymbol = (courses) => {
                 if (Array.isArray(courses)) {
                     courses.forEach(course => {
@@ -414,22 +416,22 @@ app.delete('/api/admin/attributes/:symbol', requireAuth, (req, res) => {
                     });
                 }
             };
-            
+
             for (const direction in schedule) {
                 const dirObj = schedule[direction];
                 for (const dayType in dirObj) {
                     removeSymbol(dirObj[dayType]);
                 }
             }
-            
+
             if (scheduleModified) {
                 db.prepare("INSERT INTO config (key, value) VALUES ('schedule', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(JSON.stringify(schedule));
             }
         }
 
-        res.json({ success: true, message: 'Usunięto atrybut i wyczyszczono powiązane kursy.', attributes });
+        res.json({ success: true, message: 'Usunięto oznaczenie', attributes });
     } catch (error) {
-        console.error("Błąd usuwania atrybutu:", error);
+        console.error("Błąd usuwania oznaczenia: ", error);
         res.status(500).json({ error: 'Błąd usuwania.' });
     }
 });
@@ -437,38 +439,38 @@ app.delete('/api/admin/attributes/:symbol', requireAuth, (req, res) => {
 app.put('/api/admin/attributes/:symbol', requireAuth, (req, res) => {
     const oldSymbol = req.params.symbol.trim().toUpperCase();
     const { symbol: newSymbol, description: newDescription } = req.body;
-    
+
     if (!newSymbol || !newDescription) {
         return res.status(400).json({ error: 'Symbol i opis są wymagane.' });
     }
-    
+
     const cleanNewSymbol = newSymbol.trim().toUpperCase();
     const cleanNewDesc = newDescription.trim();
-    
+
     try {
         const rowAttr = db.prepare("SELECT value FROM config WHERE key = 'course_attributes'").get();
         let attributes = rowAttr ? JSON.parse(rowAttr.value) : [{ symbol: 'S', description: 'kurs szkolny' }];
-        
+
         const attrIndex = attributes.findIndex(attr => attr.symbol === oldSymbol);
         if (attrIndex === -1) {
-            return res.status(404).json({ error: 'Nie znaleziono atrybutu.' });
+            return res.status(404).json({ error: 'Nie znaleziono oznaczenia.' });
         }
-        
+
         if (cleanNewSymbol !== oldSymbol && attributes.some(attr => attr.symbol === cleanNewSymbol)) {
-            return res.status(400).json({ error: 'Atrybut o nowym symbolu już istnieje.' });
+            return res.status(400).json({ error: 'Oznaczenie o nowym symbolu już istnieje.' });
         }
-        
+
         // Update attribute details
         attributes[attrIndex] = { symbol: cleanNewSymbol, description: cleanNewDesc };
         db.prepare("INSERT INTO config (key, value) VALUES ('course_attributes', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(JSON.stringify(attributes));
-        
+
         // If the symbol changed, migrate all courses in the schedule
         if (cleanNewSymbol !== oldSymbol) {
             const rowSchedule = db.prepare("SELECT value FROM config WHERE key = 'schedule'").get();
             if (rowSchedule) {
                 const schedule = JSON.parse(rowSchedule.value);
                 let scheduleModified = false;
-                
+
                 const renameSymbol = (courses) => {
                     if (Array.isArray(courses)) {
                         courses.forEach(course => {
@@ -482,23 +484,23 @@ app.put('/api/admin/attributes/:symbol', requireAuth, (req, res) => {
                         });
                     }
                 };
-                
+
                 for (const direction in schedule) {
                     const dirObj = schedule[direction];
                     for (const dayType in dirObj) {
                         renameSymbol(dirObj[dayType]);
                     }
                 }
-                
+
                 if (scheduleModified) {
                     db.prepare("INSERT INTO config (key, value) VALUES ('schedule', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(JSON.stringify(schedule));
                 }
             }
         }
-        
-        res.json({ success: true, message: 'Atrybut został zaktualizowany.', attributes });
+
+        res.json({ success: true, message: 'Oznaczenie zostało zaktualizowane.', attributes });
     } catch (error) {
-        console.error("Błąd aktualizacji atrybutu:", error);
+        console.error("Błąd aktualizacji oznaczeń:", error);
         res.status(500).json({ error: 'Błąd zapisu.' });
     }
 });
@@ -796,7 +798,7 @@ app.post('/api/admin/pricing/bulk', requireAuth, (req, res) => {
         res.json({ success: true, message: `Pomyślnie zaktualizowano ceny (${parsedAmount > 0 ? '+' : ''}${parsedAmount.toFixed(2)} zł).`, prices });
     } catch (error) {
         console.error("Błąd bazy danych (admin-pricing-bulk):", error);
-        res.status(500).json({ error: 'Błąd podczas masowej zmiany cen.' });
+        res.status(500).json({ error: 'Błąd podczas aktulizacji cen.' });
     }
 });
 

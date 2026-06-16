@@ -3,15 +3,13 @@
     <!-- Header / Hero section -->
     <header class="hero">
         <div class="container">
-            <h1 class="hero-title reveal reveal-up stagger-1">Nazwa twojej<br>Firmy</h1>
-            <p class="reveal reveal-up stagger-2">Krótki opis firmy, jakie miejscowości obsługuje etc <br>Zdjęcie w tle
-                do zmiany
+            <h1 class="hero-title reveal reveal-up stagger-1">Bodzio Bus</h1>
+            <p class="reveal reveal-up stagger-2">Realizujemy połączenie na trasie Harbutowice - Kraków regularnie od ponad 25 lat.
             </p>
             <div class="reveal reveal-up stagger-3">
                 <div class="btn-group-joined">
                     <a href="/rozklad" class="btn-primary"
-                        style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">Zobacz
-                        Pełny Rozkład</a>
+                        style="text-decoration: none; display: inline-flex; align-items: center; justify-content: center;">Zobacz rozkład</a>
                     <button class="btn-primary-square" id="btn-show-modal" aria-label="Pokaż zdjęcie rozkładu"
                         title="Pokaż wersję graficzną rozkładu">
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
@@ -35,8 +33,7 @@
                     <h2 class="section-title">Najbliższe kursy</h2>
                     <div class="title-underline"></div>
                     <p style="text-align: center; margin-top: 1rem; color: var(--text-secondary);">Obsługujemy
-                        miejscowości:
-                        Twoje obsługiwane miejscowości</p>
+                        miejscowości: Harbutowice, Sułkowice, Biertowice, Krzywaczka, Mogilany, Libertów, Kraków</p>
                 </div>
 
                 <div class="cards-grid">
@@ -52,8 +49,8 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3>z [Miejscowość]</h3>
-                                <span class="destination-subtext">Kierunek: [Miejscowości]</span>
+                                <h3>z Harbutowic</h3>
+                                <span class="destination-subtext">Kierunek: Sułkowice, Krzywaczka, Kraków</span>
                             </div>
                         </div>
                         <div class="card-body">
@@ -79,8 +76,8 @@
                                 </svg>
                             </div>
                             <div>
-                                <h3>z [Miejscowość]</h3>
-                                <span class="destination-subtext">Kierunek: [Miejscowości]</span>
+                                <h3>z Krakowa</h3>
+                                <span class="destination-subtext">Kierunek: Krzywaczka, Sułkowice, Harbutowice</span>
                             </div>
                         </div>
                         <div class="card-body">
@@ -147,13 +144,13 @@
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
             </button>
-            <h3 class="modal-title">Pełny Rozkład Jazdy</h3>
-            <img src="/rozklad-current" alt="Rozkład jazdy busów" class="modal-image" loading="lazy">
+            <h3 class="modal-title">Rozkład Jazdy</h3>
+            <img src="/rozklad-current" alt="Rozkład jazdy busów" class="modal-image" loading="lazy" width="800" height="600">
         </div>
     </div>
 
     <script src="/schedule.js?v=2" defer></script>
-    <script src="/news.js?v=2" defer></script>
+    <script src="/news.js?v=3" defer></script>
     <script src="/faq.js?v=2" defer></script>
 
     <%- include('partials/footer') %>

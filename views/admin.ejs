@@ -4,7 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Testbus - Panel</title>
+    <title>Bodzio - Zarządzanie</title>
+    <link rel="shortcut icon" href="/favicon.jpg" type="image/jpeg">
+    <link rel="icon" href="/favicon.jpg" type="image/jpeg">
     <link rel="stylesheet" href="/style.css">
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
@@ -15,7 +17,7 @@
     <!-- Mobile Header (Visible only on small screens) -->
     <div class="mobile-top-bar">
         <div class="logo">
-            <div class="logo-text">TEST<span>BUS</span></div>
+            <div class="logo-text">Bodzio<span> BUS</span></div>
         </div>
         <button id="mobile-toggle" class="mobile-toggle">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -32,7 +34,7 @@
         <div class="sidebar-header">
             <div class="logo">
                 <a href="/" style="text-decoration: none;">
-                    <div class="logo-text">TEST<span>BUS</span></div>
+                    <div class="logo-text">Bodzio<span> BUS</span></div>
                 </a>
             </div>
         </div>
@@ -107,7 +109,7 @@
     <div class="login-screen-wrapper" id="login-screen">
         <div class="login-card">
             <div class="login-logo">
-                <h1>TEST<span>BUS</span></h1>
+                <h1>Bodzio<span> BUS</span></h1>
             </div>
             <div id="login-alert" class="alert"></div>
             <form id="login-form">
@@ -132,7 +134,7 @@
             <div
                 style="background: white; padding: 20px; border-radius: var(--radius-box); border: 1px solid var(--admin-border);">
                 <h3>Regulamin</h3>
-                <p style="margin-bottom: 20px; color: var(--text-secondary);">Prześlij nową wersję regulaminu przewozów.
+                <p style="margin-bottom: 20px; color: var(--text-secondary);">Prześlij nowy regulamin przewozów.
                     <br>
                     <strong>Format:</strong> PDF (maks. 8MB)
                 </p>
@@ -152,8 +154,7 @@
                 style="background: white; padding: 20px; border-radius: var(--radius-box); border: 1px solid var(--admin-border); margin-bottom: 30px;">
                 <h3>Zdjęcie rozkładu</h3>
                 <p style="margin-bottom: 15px; color: var(--text-secondary);">Wybierz nową grafikę rozkładu.
-                    <strong>Wskazówka:</strong> Użyj formatu <strong>WebP</strong> lub skompresuj plik PNG, aby
-                    przyspieszyć ładowanie strony na telefonach.
+                    <strong>Formaty zdjęć: </strong> PNG, JPG, JPEG, WebP, AVIF
                 </p>
                 <form id="upload-form">
                     <div class="form-group" style="margin-bottom: 15px;">
@@ -161,7 +162,7 @@
                             required>
                     </div>
                     <button type="submit" class="btn-primary" style="background: var(--primary-color);">Aktualizuj
-                        zdjęcie rozkładu</button>
+                        zdjęcie</button>
                 </form>
             </div>
 
@@ -170,14 +171,14 @@
                 style="background: white; padding: 25px; border-radius: var(--radius-box); border: 1px solid var(--admin-border);">
                 <h3 style="margin-top: 0;">Zarządzanie Kursami</h3>
                 <p style="margin-bottom: 20px; color: var(--text-secondary);">Tutaj możesz dodawać, edytować i usuwać
-                    godziny odjazdów dla wybranych tras.</p>
+                    kursy.</p>
 
                 <div class="schedule-toolbar">
                     <div class="schedule-filter-group">
                         <label for="schedule-city-select">Kierunek</label>
                         <select id="schedule-city-select">
-                            <option value="myslenice">Z Miejscowość 1</option>
-                            <option value="sulkowice">Z Miejscowość 2</option>
+                            <option value="myslenice">Z Krakowa</option>
+                            <option value="sulkowice">Z Harbutowic</option>
                         </select>
                     </div>
                     <div class="schedule-filter-group">
@@ -188,7 +189,7 @@
                             <option value="sunday">Niedziele i święta</option>
                         </select>
                     </div>
-                    <button type="button" id="load-schedule-view" class="btn-primary">Wczytaj Widok</button>
+                    <button type="button" id="load-schedule-view" class="btn-primary">Wczytaj kursy</button>
                 </div>
 
                 <div class="schedule-editor-area">
@@ -200,15 +201,15 @@
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <polyline points="12 6 12 12 16 14"></polyline>
                             </svg>
-                            <p>Wybierz kierunek i dzień, a następnie kliknij "Wczytaj Widok".</p>
+                            <p>Wybierz kierunek i dzień, a następnie kliknij "Wczytaj kursy".</p>
                         </div>
                     </div>
 
                     <div class="schedule-actions-bottom">
                         <button type="button" id="add-schedule-row" class="btn-outline" style="display: none;">
-                            <span>Stwórz nowy kurs</span>
+                            <span>Nowy kurs</span>
                         </button>
-                        <button type="button" id="save-schedule-btn" class="btn-primary" style="display: none;">Zapisz
+                        <button type="button" id="save-schedule-btn" class="btn-primary" style="display: none;">[!] Zapisz
                             zmiany</button>
                     </div>
                 </div>
@@ -233,11 +234,11 @@
                         <input type="text" id="new-attr-desc" placeholder="np. kurs szkolny" required
                             style="border: 1px solid #cbd5e1; border-radius: 0;">
                     </div>
-                    <button type="submit" class="btn-primary" style="height: 46px;">Dodaj atrybut</button>
+                    <button type="submit" class="btn-primary" style="height: 46px;">Dodaj oznaczenie</button>
                 </form>
 
                 <div id="attributes-list-container">
-                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Ładowanie atrybutów...</p>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Ładowanie oznaczeń...</p>
                 </div>
             </div>
         </div>
@@ -262,7 +263,7 @@
                 <!-- Edytor cen relacji -->
                 <div
                     style="background: white; padding: 20px; border-radius: var(--radius-box); border: 1px solid var(--admin-border);">
-                    <h3>Edytor Cen Relacji</h3>
+                    <h3>Edytor cen</h3>
                     <div class="form-group">
                         <label>Przystanek A</label>
                         <select id="price-stop-a"></select>
@@ -295,7 +296,7 @@
                 style="margin-top: 30px; background: white; padding: 20px; border-radius: var(--radius-box); border: 1px solid var(--admin-border);">
                 <h3>Szybka zmiana cen</h3>
                 <p style="margin-bottom: 20px; color: var(--text-secondary);">Zwiększ lub zmniejsz ceny o wybraną kwotę
-                    dla wszystkich biletów danego typu w systemie. Użyj ujemnej wartości (np. -2.00) aby obniżyć ceny.
+                    dla wszystkich biletów danego typu. Użyj ujemnej wartości (np. -2.00) aby obniżyć ceny.
                 </p>
                 <div style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
                     <div class="form-group" style="margin-bottom: 0; min-width: 200px;">
@@ -310,9 +311,17 @@
                         <input type="number" step="0.10" id="bulk-price-amount" placeholder="np. 2.00 lub -1.50"
                             required>
                     </div>
-                    <button type="button" id="bulk-price-btn" class="btn-primary" style="padding: 12px 24px;">Zastosuj
-                        dla wszystkich</button>
+                    <button type="button" id="bulk-price-btn" class="btn-primary" style="padding: 12px 24px;">Zastosuj</button>
                 </div>
+            </div>
+
+            <div
+                style="margin-top: 30px; background: white; padding: 20px; border-radius: var(--radius-box); border: 1px solid var(--admin-border);">
+                <h3>Przelicz bilety miesięczne</h3>
+                <p style="margin-bottom: 20px; color: var(--text-secondary);">Automatycznie przelicz i zaktualizuj ceny biletów miesięcznych normalnych oraz ulgowych dla wszystkich relacji na podstawie cen jednorazowych.
+                    <br><strong>Wzór:</strong> Miesięczny = Jednorazowy * 2 * 20 (40 przejazdów). Ulgowy = Miesięczny - 49%.
+                </p>
+                <button type="button" id="recalculate-monthly-btn" class="btn-primary" style="padding: 12px 24px;">Przelicz ceny miesięczne</button>
             </div>
 
         </div>
@@ -323,7 +332,7 @@
                 <!-- Formularz tworzenia -->
                 <div
                     style="background: white; padding: 25px; border-radius: var(--radius-box); border: 1px solid var(--admin-border);">
-                    <h3 style="margin-top: 0;">Kreator aktualności</h3>
+                    <h3 style="margin-top: 0;">Aktualności</h3>
                     <p style="margin-bottom: 25px; color: var(--text-secondary);">Użyj poniższego edytora, aby stworzyć
                         nową wiadomość/ogłoszenie na stronie głównej.
                     </p>
@@ -344,7 +353,7 @@
 
                 <div
                     style="background: white; padding: 25px; border-radius: var(--radius-box); border: 1px solid var(--admin-border);">
-                    <h3 style="margin-top: 0; margin-bottom: 20px;">Opublikowane wiadomości</h3>
+                    <h3 style="margin-top: 0; margin-bottom: 20px;">Opublikowane</h3>
                     <div id="news-list">
                         <!-- Lista aktualności ładuje się dynamicznie -->
                     </div>
@@ -373,15 +382,14 @@
                             <textarea id="faq-answer" rows="4" placeholder="Wprowadź treść odpowiedzi..." required
                                 style="width: 100%; padding: 10px; border: 1px solid var(--admin-border); border-radius: 4px; font-family: inherit;"></textarea>
                         </div>
-                        <button type="submit" id="faq-save-btn" class="btn-primary" style="padding: 12px 24px;">Dodaj
-                            pytanie FAQ</button>
+                        <button type="submit" id="faq-save-btn" class="btn-primary" style="padding: 12px 24px;">Dodaj</button>
                     </form>
                 </div>
 
                 <!-- Lista pytań FAQ -->
                 <div
                     style="background: white; padding: 20px; border-radius: var(--radius-box); border: 1px solid var(--admin-border);">
-                    <h3>Lista pytań</h3>
+                    <h3>Pytania</h3>
                     <div id="faq-list-container" style="display: flex; flex-direction: column; margin-top: 20px;">
                         <!-- Lista FAQ ładuje się dynamicznie -->
                     </div>
@@ -397,16 +405,16 @@
     <div id="add-course-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Dodaj Nowy Kurs</h3>
+                <h3>Dodaj nowy kurs</h3>
                 <button type="button" class="close-modal-btn">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label>Godzina Odjazdu</label>
+                    <label>Godzina odjazdu</label>
                     <input type="time" id="new-course-time" value="12:00" required>
                 </div>
                 <div class="form-group">
-                    <label>Warianty Kursu</label>
+                    <label>Oznaczenia</label>
                     <div class="schedule-tags-wrap" id="modal-attributes-container"
                         style="background: transparent; border: none; padding: 0;">
                         <!-- Dynamicznie ładowane atrybuty -->
@@ -414,7 +422,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn-primary" id="confirm-add-course">Dodaj Kurs</button>
+                <button type="button" class="btn-primary" id="confirm-add-course">Dodaj</button>
             </div>
         </div>
     </div>

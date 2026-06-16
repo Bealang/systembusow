@@ -10,6 +10,31 @@ document.addEventListener('DOMContentLoaded', () => {
     let isMonthlyManuallyEdited = false;
     let isMonthlyDiscountManuallyEdited = false;
 
+    // Define and register custom Image blot to support alt attributes
+    const ImageBlot = Quill.import('formats/image');
+    class CustomImageBlot extends ImageBlot {
+        static create(value) {
+            const node = super.create(value);
+            if (typeof value === 'object') {
+                node.setAttribute('src', this.sanitize(value.url));
+                if (value.alt) {
+                    node.setAttribute('alt', value.alt);
+                }
+            } else if (typeof value === 'string') {
+                node.setAttribute('src', this.sanitize(value));
+            }
+            return node;
+        }
+
+        static value(node) {
+            return {
+                url: node.getAttribute('src'),
+                alt: node.getAttribute('alt')
+            };
+        }
+    }
+    Quill.register(CustomImageBlot, true);
+
     // Initialize Quill Editor
     var quill = new Quill('#news-editor', {
         theme: 'snow',
@@ -92,6 +117,10 @@ document.addEventListener('DOMContentLoaded', () => {
         showStatus('Przetwarzanie i optymalizacja obrazu...', 'success');
         
         try {
+            const originalName = file.name || 'obraz';
+            const baseName = originalName.substring(0, originalName.lastIndexOf('.')) || originalName;
+            const altText = baseName.replace(/[-_]/g, ' ').trim();
+
             const img = await loadImage(file);
             
             const canvas = document.createElement('canvas');
@@ -138,7 +167,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             const range = quill.getSelection(true);
-            quill.insertEmbed(range.index, 'image', data.url, Quill.sources.USER);
+            quill.insertEmbed(range.index, 'image', { url: data.url, alt: altText }, Quill.sources.USER);
+            
+            // Double guard fallback to set alt attribute directly on the DOM element as well
+            setTimeout(() => {
+                const imgEl = quill.root.querySelector(`img[src="${data.url}"]`);
+                if (imgEl) {
+                    imgEl.setAttribute('alt', altText);
+                }
+            }, 50);
+
             quill.setSelection(range.index + 1, Quill.sources.SILENT);
             
             showStatus('Obraz został pomyślnie dodany i zoptymalizowany!', 'success');
@@ -1347,29 +1385,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    document.getElementById('recalculate-monthly-btn').addEventListener('click', async () => {
-        if (!confirm('Czy na pewno chcesz przeliczyć i zaktualizować ceny biletów miesięcznych normalnych i ulgowych dla WSZYSTKICH relacji na podstawie cen jednorazowych? Ta operacja nadpisze obecne ceny miesięczne.')) {
-            return;
-        }
-        try {
-            const res = await fetch('/api/admin/pricing/recalculate-monthly', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            const data = await res.json();
-            if (res.ok) {
-                allPrices = data.prices;
-                localStorage.removeItem('mleczek_pricing');
-                showStatus(data.message, 'success');
-                updatePriceForm();
-            } else {
-                showStatus(data.error || 'Błąd podczas przeliczania biletów.', 'error');
+    const recalculateBtn = document.getElementById('recalculate-monthly-btn');
+    if (recalculateBtn) {
+        recalculateBtn.addEventListener('click', async () => {
+            if (!confirm('Czy na pewno chcesz przeliczyć i zaktualizować ceny biletów miesięcznych normalnych i ulgowych dla WSZYSTKICH relacji na podstawie cen jednorazowych? Ta operacja nadpisze obecne ceny miesięczne.')) {
+                return;
             }
-        } catch (e) {
-            showStatus('Błąd połączenia podczas przeliczania biletów.', 'error');
-            console.error("Recalculate monthly error:", e);
-        }
-    });
+            try {
+                const res = await fetch('/api/admin/pricing/recalculate-monthly', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    allPrices = data.prices;
+                    localStorage.removeItem('mleczek_pricing');
+                    showStatus(data.message, 'success');
+                    updatePriceForm();
+                } else {
+                    showStatus(data.error || 'Błąd podczas przeliczania biletów.', 'error');
+                }
+            } catch (e) {
+                showStatus('Błąd połączenia podczas przeliczania biletów.', 'error');
+                console.error("Recalculate monthly error:", e);
+            }
+        });
+    }
 
     // --- FAQ LOGIC ---
     async function loadFaqData() {
