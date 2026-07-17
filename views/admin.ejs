@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bodzio - Zarządzanie</title>
+    <title>TwojaNazwa - Zarządzanie</title>
     <link rel="shortcut icon" href="/favicon.jpg" type="image/jpeg">
     <link rel="icon" href="/favicon.jpg" type="image/jpeg">
     <link rel="stylesheet" href="/style.css">
@@ -17,7 +17,7 @@
     <!-- Mobile Header (Visible only on small screens) -->
     <div class="mobile-top-bar">
         <div class="logo">
-            <div class="logo-text">Bodzio<span> BUS</span></div>
+            <div class="logo-text">TwojaNazwa<span> BUS</span></div>
         </div>
         <button id="mobile-toggle" class="mobile-toggle">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
@@ -34,7 +34,7 @@
         <div class="sidebar-header">
             <div class="logo">
                 <a href="/" style="text-decoration: none;">
-                    <div class="logo-text">Bodzio<span> BUS</span></div>
+                    <div class="logo-text">TwojaNazwa<span> BUS</span></div>
                 </a>
             </div>
         </div>
@@ -109,7 +109,7 @@
     <div class="login-screen-wrapper" id="login-screen">
         <div class="login-card">
             <div class="login-logo">
-                <h1>Bodzio<span> BUS</span></h1>
+                <h1>TwojaNazwa<span> BUS</span></h1>
             </div>
             <div id="login-alert" class="alert"></div>
             <form id="login-form">
@@ -177,8 +177,8 @@
                     <div class="schedule-filter-group">
                         <label for="schedule-city-select">Kierunek</label>
                         <select id="schedule-city-select">
-                            <option value="myslenice">Z Krakowa</option>
-                            <option value="sulkowice">Z Harbutowic</option>
+                            <option value="myslenice">Z Miejscowości2</option>
+                            <option value="sulkowice">Z Miejscowości1</option>
                         </select>
                     </div>
                     <div class="schedule-filter-group">
@@ -428,7 +428,7 @@
     </div>
 
     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-    <script src="/admin.js?v=<%= Date.now() %>"></script>
+    <script type="module" src="/js/admin/main.js?v=<%= Date.now() %>"></script>
 </body>
 
 </html>

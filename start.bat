@@ -1,8 +1,8 @@
 @echo off
-title Serwer Bodzio bus
+title Aplikacja dla linii regularnej
 echo =======================================
-echo    Uruchamianie serwera BodzioBUS
+echo    Uruchamianie serwera 
 echo =======================================
 echo.
-node server.js
+node src/server.js
 pause

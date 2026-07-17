@@ -30,13 +30,21 @@
         }).join(", ");
     }
 
+    function getDepartureDate(timeStr, baseDate) {
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        const depDate = new Date(baseDate);
+        depDate.setHours(hours, minutes, 0, 0);
+        return depDate;
+    }
+
     function getNextDepartures(citySchedule, currentDate) {
         if (!citySchedule) return null;
         let checkDate = new Date(currentDate);
-        let currentMins = window.timeToMinutes(
-            checkDate.getHours().toString().padStart(2, '0') + ':' +
-            checkDate.getMinutes().toString().padStart(2, '0')
-        );
+        let currentMins = checkDate.getHours() * 60 + checkDate.getMinutes();
+        
+        // We also check for courses that departed up to 1 minute ago to show "Właśnie odjechał"
+        // so we adjust currentMins slightly down by 1 minute for the initial check on today
+        let checkMinsToday = currentMins - 1;
 
         for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
             let dayType = getDayType(checkDate);
@@ -47,10 +55,16 @@
                     let departure = scheduleForDay[i];
                     let departureMins = window.timeToMinutes(departure.time);
 
-                    if (dayOffset > 0 || departureMins >= currentMins) {
+                    const isTargetTime = dayOffset > 0 || departureMins >= checkMinsToday;
+
+                    if (isTargetTime) {
+                        const departureDate = getDepartureDate(departure.time, checkDate);
+                        
                         let nextFollowing = null;
+                        let followingDate = null;
                         if (i + 1 < scheduleForDay.length) {
                             nextFollowing = scheduleForDay[i + 1];
+                            followingDate = getDepartureDate(nextFollowing.time, checkDate);
                         } else {
                             let nextDayDate = new Date(checkDate);
                             for (let nextOffset = 1; nextOffset < 7; nextOffset++) {
@@ -58,6 +72,7 @@
                                 let nextDayType = getDayType(nextDayDate);
                                 if (citySchedule[nextDayType] && citySchedule[nextDayType].length > 0) {
                                     nextFollowing = citySchedule[nextDayType][0];
+                                    followingDate = getDepartureDate(nextFollowing.time, nextDayDate);
                                     break;
                                 }
                             }
@@ -65,7 +80,9 @@
 
                         return {
                             next: departure,
+                            nextDate: departureDate,
                             following: nextFollowing,
+                            followingDate: followingDate,
                             isToday: dayOffset === 0,
                             dayName: getDayName(checkDate)
                         };
@@ -73,9 +90,69 @@
                 }
             }
             checkDate.setDate(checkDate.getDate() + 1);
-            currentMins = 0;
+            checkMinsToday = 0; // Reset for subsequent days
         }
         return null;
+    }
+
+    function formatTimeDiff(diffMs, departureDate, currentDate) {
+        const diffSecs = Math.round(diffMs / 1000);
+        
+        // Poniżej minuty temu (właśnie odjechał)
+        if (diffSecs < 0 && diffSecs >= -60) {
+            return { main: "Właśnie odjechał", showTime: true };
+        }
+        
+        if (diffSecs <= 0) {
+            return { main: "odjechał", showTime: false };
+        }
+
+        // Sprawdzamy czy to ten sam dzień kalendarzowy
+        const isSameDay = departureDate.getDate() === currentDate.getDate() &&
+                          departureDate.getMonth() === currentDate.getMonth() &&
+                          departureDate.getFullYear() === currentDate.getFullYear();
+
+        if (isSameDay) {
+            const diffMins = Math.floor(diffSecs / 60);
+
+            if (diffMins === 0) {
+                return { main: "za chwilę", showTime: true };
+            }
+
+            if (diffMins < 60) {
+                return { main: `za ${diffMins} min`, showTime: true };
+            }
+
+            const diffHours = Math.floor(diffMins / 60);
+            const remainingMins = diffMins % 60;
+            const minsStr = remainingMins > 0 ? ` ${remainingMins} min` : "";
+            return { main: `za ${diffHours} godz.${minsStr}`, showTime: true };
+        }
+
+        // Sprawdzamy czy to jutro (kolejny dzień kalendarzowy)
+        const tomorrow = new Date(currentDate);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const isTomorrow = departureDate.getDate() === tomorrow.getDate() &&
+                           departureDate.getMonth() === tomorrow.getMonth() &&
+                           departureDate.getFullYear() === tomorrow.getFullYear();
+
+        if (isTomorrow) {
+            return { main: "Jutro", showTime: true };
+        }
+
+        // W przeciwnym razie obliczamy dni kalendarzowe
+        const currentZero = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate());
+        const departureZero = new Date(departureDate.getFullYear(), departureDate.getMonth(), departureDate.getDate());
+        const diffDays = Math.round((departureZero - currentZero) / (1000 * 60 * 60 * 24));
+
+        return { main: `za ${diffDays} dni`, showTime: true };
+    }
+
+    function formatFooterInfo(following, followingDate, now) {
+        if (!following || !followingDate) return "Następny: --:--";
+        const diffMs = followingDate.getTime() - now.getTime();
+        const countdownInfo = formatTimeDiff(diffMs, followingDate, now);
+        return `Następny: ${following.time} (${countdownInfo.main})`;
     }
 
     function updateDisplays() {
@@ -90,37 +167,47 @@
         const mFollow = document.getElementById('following-myslenice-info');
 
         if (mysleniceDeps) {
-            if (mTime) mTime.textContent = mysleniceDeps.next.time;
-            if (mNotes) mNotes.innerHTML = formatNotes(mysleniceDeps.next.notes);
-
-            let subText = "Następny: " + (mysleniceDeps.following ? mysleniceDeps.following.time : "--:--");
-            if (!mysleniceDeps.isToday) {
-                subText = `Najbliższy kurs: ${mysleniceDeps.dayName}`;
+            if (mTime) {
+                const diffMs = mysleniceDeps.nextDate.getTime() - now.getTime();
+                const timeInfo = formatTimeDiff(diffMs, mysleniceDeps.nextDate, now);
+                mTime.innerHTML = `
+                    <div class="time-countdown">${timeInfo.main}</div>
+                    ${timeInfo.showTime ? `<div class="time-sub-hour">odjazd o ${mysleniceDeps.next.time}</div>` : ''}
+                `;
             }
-            if (mFollow) mFollow.textContent = subText;
+            if (mNotes) mNotes.innerHTML = formatNotes(mysleniceDeps.next.notes);
+            if (mFollow) {
+                mFollow.textContent = formatFooterInfo(mysleniceDeps.following, mysleniceDeps.followingDate, now);
+            }
         } else {
-            if (mTime) mTime.textContent = "--:--";
+            if (mTime) mTime.innerHTML = '<div class="time-countdown">--:--</div>';
             if (mNotes) mNotes.textContent = "Brak kursów";
+            if (mFollow) mFollow.textContent = "Następny: --:--";
         }
 
-        // Sułkowice Update
+        // Miejscowość2 Update
         const sulkowiceDeps = getNextDepartures(currentScheduleData.sulkowice, now);
         const sTime = document.getElementById('next-sulkowice-time');
         const sNotes = document.getElementById('next-sulkowice-notes');
         const sFollow = document.getElementById('following-sulkowice-info');
 
         if (sulkowiceDeps) {
-            if (sTime) sTime.textContent = sulkowiceDeps.next.time;
-            if (sNotes) sNotes.innerHTML = formatNotes(sulkowiceDeps.next.notes);
-
-            let subText = "Następny: " + (sulkowiceDeps.following ? sulkowiceDeps.following.time : "--:--");
-            if (!sulkowiceDeps.isToday) {
-                subText = `Najbliższy kurs: ${sulkowiceDeps.dayName}`;
+            if (sTime) {
+                const diffMs = sulkowiceDeps.nextDate.getTime() - now.getTime();
+                const timeInfo = formatTimeDiff(diffMs, sulkowiceDeps.nextDate, now);
+                sTime.innerHTML = `
+                    <div class="time-countdown">${timeInfo.main}</div>
+                    ${timeInfo.showTime ? `<div class="time-sub-hour">odjazd o ${sulkowiceDeps.next.time}</div>` : ''}
+                `;
             }
-            if (sFollow) sFollow.textContent = subText;
+            if (sNotes) sNotes.innerHTML = formatNotes(sulkowiceDeps.next.notes);
+            if (sFollow) {
+                sFollow.textContent = formatFooterInfo(sulkowiceDeps.following, sulkowiceDeps.followingDate, now);
+            }
         } else {
-            if (sTime) sTime.textContent = "--:--";
+            if (sTime) sTime.innerHTML = '<div class="time-countdown">--:--</div>';
             if (sNotes) sNotes.textContent = "Brak kursów";
+            if (sFollow) sFollow.textContent = "Następny: --:--";
         }
     }
 
@@ -175,10 +262,10 @@
             fetchSchedule();
         });
 
-        // Auto-refresh departures every 60s
+        // Auto-refresh departures every 10s (seconds removed)
         setInterval(() => {
             requestAnimationFrame(updateDisplays);
-        }, 60000);
+        }, 10000);
 
         // Zoom Modal Setup
         const modal = document.getElementById('schedule-modal');

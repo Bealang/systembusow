@@ -1,0 +1,34 @@
+const db = require('../config/database');
+
+function getSchedule() {
+    const row = db.prepare("SELECT value FROM config WHERE key = 'schedule'").get();
+    return row ? JSON.parse(row.value) : {};
+}
+
+function getScheduleWithAttributes() {
+    const scheduleRow = db.prepare("SELECT value FROM config WHERE key = 'schedule'").get();
+    const schedule = scheduleRow ? JSON.parse(scheduleRow.value) : {};
+
+    const attrRow = db.prepare("SELECT value FROM config WHERE key = 'course_attributes'").get();
+    const attributes = attrRow ? JSON.parse(attrRow.value) : [];
+
+    return { schedule, attributes };
+}
+
+function updateSchedule(newSchedule) {
+    db.prepare(
+        "INSERT INTO config (key, value) VALUES ('schedule', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value"
+    ).run(JSON.stringify(newSchedule));
+}
+
+function validateScheduleFormat(schedule) {
+    const isValidCourses = (courses) =>
+        Array.isArray(courses) && courses.every(c => c && typeof c.time === 'string' && Array.isArray(c.notes));
+
+    const isValidVariant = (variant) =>
+        variant && isValidCourses(variant.workdays) && isValidCourses(variant.saturday) && isValidCourses(variant.sunday);
+
+    return schedule && isValidVariant(schedule.myslenice) && isValidVariant(schedule.sulkowice);
+}
+
+module.exports = { getSchedule, getScheduleWithAttributes, updateSchedule, validateScheduleFormat };
