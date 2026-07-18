@@ -85,7 +85,17 @@ function createScheduleRow(time = '12:00', notes = []) {
         </button>
     `;
 
-    // Sort on time change
+    // Clicking anywhere on the tile (except the delete button, labels and checkboxes) focuses the time input
+    div.addEventListener('click', (e) => {
+        if (e.target.closest('.rm-row') || e.target.closest('.variant-tag') || e.target.closest('input[type="checkbox"]')) return;
+        const timeInput = div.querySelector('.row-time');
+        if (e.target !== timeInput) {
+            timeInput.focus();
+            timeInput.showPicker?.();
+        }
+    });
+
+    // Sort on time change (preserving scroll position)
     div.querySelector('.row-time').addEventListener('change', () => {
         sortScheduleDOM();
         checkUnsavedChanges();
@@ -109,6 +119,7 @@ function createScheduleRow(time = '12:00', notes = []) {
 // ─── Sort ─────────────────────────────────────────────────────────────────────
 
 function sortScheduleDOM() {
+    const scrollY = window.scrollY;
     const rows = Array.from(containerSchedule.querySelectorAll('.schedule-row'));
     rows.sort((a, b) => {
         const timeA = a.querySelector('.row-time').value || '00:00';
@@ -116,6 +127,8 @@ function sortScheduleDOM() {
         return timeA.localeCompare(timeB);
     });
     rows.forEach(row => containerSchedule.appendChild(row));
+    // Restore scroll position so the page doesn't jump to the top after sort
+    window.scrollTo({ top: scrollY, behavior: 'instant' });
 }
 
 // ─── Render ───────────────────────────────────────────────────────────────────

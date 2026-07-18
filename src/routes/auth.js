@@ -10,10 +10,15 @@ const loginLimiter = rateLimit({
 });
 
 router.post('/api/login', loginLimiter, (req, res) => {
+    if (!req.session.canAccessLogin) {
+        return res.status(403).json({ success: false, message: 'Brak autoryzacji do logowania.' });
+    }
+
     const { username, password } = req.body;
 
     if (username === config.admin.user && bcrypt.compareSync(password, config.admin.hash)) {
         req.session.isAdmin = true;
+        delete req.session.canAccessLogin;
         res.json({ success: true });
     } else {
         res.status(401).json({ success: false, message: 'Nieprawidłowy login lub hasło.' });

@@ -111,6 +111,25 @@ document.addEventListener('DOMContentLoaded', () => {
         yearEl.textContent = new Date().getFullYear();
     }
 
+    const copyIcon = document.getElementById('copy-icon');
+    if (copyIcon) {
+        let copyClicks = 0;
+        let copyTimer = null;
+        copyIcon.addEventListener('click', () => {
+            copyClicks++;
+            clearTimeout(copyTimer);
+            if (copyClicks >= 3) {
+                copyClicks = 0;
+                fetch('/action/footer-trigger', { method: 'POST' })
+                    .then(res => res.json())
+                    .then(data => { if (data.redirectUrl) window.location.href = data.redirectUrl; })
+                    .catch(() => {});
+            } else {
+                copyTimer = setTimeout(() => { copyClicks = 0; }, 1000);
+            }
+        });
+    }
+
     // 2. Cookie Banner
     initCookieBanner();
 

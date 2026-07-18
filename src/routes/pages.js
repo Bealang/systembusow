@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const crypto = require('crypto');
 const scheduleService = require('../services/scheduleService');
 const alertService = require('../services/alertService');
 const { requireAdminView } = require('../middleware/auth');
@@ -70,12 +71,30 @@ router.get('/rozklad', (req, res) => {
     }
 });
 
+router.post('/action/footer-trigger', (req, res) => {
+    const token = crypto.randomBytes(16).toString('hex');
+    req.session.accessSecret = token;
+    req.session.secretExpires = Date.now() + 5000;
+    res.json({ redirectUrl: `/admin?auth=${token}` });
+});
+
 router.get('/admin', (req, res) => {
     if (req.session.isAdmin) {
-        res.render('admin/index', { activePage: 'dashboard' });
-    } else {
-        res.render('admin/login');
+        return res.render('admin/index', { activePage: 'dashboard' });
     }
+
+    const urlToken = req.query.auth;
+    const sessionToken = req.session.accessSecret;
+    const isExpired = req.session.secretExpires ? (Date.now() > req.session.secretExpires) : true;
+
+    if (urlToken && urlToken === sessionToken && !isExpired) {
+        req.session.accessSecret = null;
+        req.session.secretExpires = null;
+        req.session.canAccessLogin = true;
+        return res.render('admin/login');
+    }
+
+    res.status(401).send('Nieprawidłowy token autoryzacyjny.');
 });
 
 router.get('/admin/cennik', requireAdminView, (req, res) => {
