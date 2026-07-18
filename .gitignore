@@ -4,4 +4,4 @@ data/
 uploads/
 *.sqlite
 .DS_Store
-./agent
+.agent/
