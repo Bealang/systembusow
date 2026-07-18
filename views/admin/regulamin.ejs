@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bodzio - Regulamin (Zarządzanie)</title>
+    <link rel="shortcut icon" href="/favicon.jpg" type="image/jpeg">
+    <link rel="icon" href="/favicon.jpg" type="image/jpeg">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/admin.css">
+</head>
+
+<body>
+    <%- include('partials/sidebar', { activePage: 'regulamin' }) %>
+
+    <div class="admin-container admin-main-area" id="admin-panel" style="display: block !important;">
+        <div id="notification-container"></div>
+
+        <!-- Obsługa Plików -->
+        <div id="tab-files" class="tab-content active">
+            <div
+                style="background: white; padding: 25px; border-radius: var(--radius-box); border: 1px solid var(--admin-border); box-shadow: var(--shadow-soft);">
+                <h3>Regulamin</h3>
+                <p style="margin-bottom: 20px; color: var(--text-secondary); font-size: 0.95rem;">Prześlij nowy regulamin przewozów.
+                    <br>
+                    <strong>Format:</strong> PDF (maks. 8MB)
+                </p>
+                <form id="upload-regulamin-form">
+                    <div class="form-group">
+                        <input type="file" id="regulamin_file" accept="application/pdf" required style="padding: 12px; border: 1.5px solid var(--admin-border); background: #f8fafc;">
+                    </div>
+                    <button type="submit" class="btn-primary">Aktualizuj regulamin</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/js/admin/main.js?v=<%= Date.now() %>"></script>
+</body>
+
+</html>

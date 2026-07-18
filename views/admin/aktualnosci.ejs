@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bodzio - Aktualności (Zarządzanie)</title>
+    <link rel="shortcut icon" href="/favicon.jpg" type="image/jpeg">
+    <link rel="icon" href="/favicon.jpg" type="image/jpeg">
+    <link rel="stylesheet" href="/style.css">
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <link rel="stylesheet" href="/admin.css">
+</head>
+
+<body>
+    <%- include('partials/sidebar', { activePage: 'aktualnosci' }) %>
+
+    <div class="admin-container admin-main-area" id="admin-panel" style="display: block !important;">
+        <div id="notification-container"></div>
+
+        <!-- Obsługa Aktualności -->
+        <div id="tab-news" class="tab-content active">
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+                <!-- Ważny alert -->
+                <div
+                    style="background: white; padding: 25px; border-radius: var(--radius-box); border: 1px solid var(--admin-border); box-shadow: var(--shadow-soft);">
+                    <h3 style="margin-top: 0;">Ważny alert</h3>
+                    <p style="margin-bottom: 20px; color: var(--text-secondary); font-size: 0.95rem;">Wpisz treść komunikatu, aby wyświetlić go na stronie głównej w czerwonym pasku. Pozostaw puste pole i zapisz, aby ukryć alert.</p>
+
+                    <form id="alert-form">
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="alert-text" style="font-weight: 600;">Treść alertu</label>
+                            <textarea id="alert-text" rows="3" placeholder="np. Utrudnienia na trasie. Możliwe opóźnienia do 20 minut." style="width: 100%; padding: 12px; border: 1.5px solid var(--admin-border); border-radius: 4px; font-family: inherit; font-size: 1rem; resize: vertical; background: #f8fafc;"></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary" style="padding: 12px 30px; background-color: #d32f2f; color: white; border: none; font-weight: 700; cursor: pointer;">Zapisz alert</button>
+                    </form>
+                </div>
+
+                <!-- Formularz tworzenia -->
+                <div
+                    style="background: white; padding: 25px; border-radius: var(--radius-box); border: 1px solid var(--admin-border); box-shadow: var(--shadow-soft);">
+                    <h3 style="margin-top: 0;">Aktualności</h3>
+                    <p style="margin-bottom: 25px; color: var(--text-secondary); font-size: 0.95rem;">Użyj poniższego edytora, aby stworzyć nową wiadomość/ogłoszenie na stronie głównej.</p>
+
+                    <form id="news-form">
+                        <div class="form-group">
+                            <label for="news-title">Tytuł</label>
+                            <input type="text" id="news-title" required placeholder="Wprowadź tytuł..." style="padding: 12px; border: 1.5px solid var(--admin-border); background: #f8fafc;">
+                        </div>
+                        <div class="form-group">
+                            <label>Treść</label>
+                            <div id="news-editor" style="height: 300px; background: white; border: 1.5px solid var(--admin-border);"></div>
+                        </div>
+                        <button type="submit" class="btn-primary" style="padding: 15px 30px;">Opublikuj</button>
+                    </form>
+                </div>
+
+                <div
+                    style="background: white; padding: 25px; border-radius: var(--radius-box); border: 1px solid var(--admin-border); box-shadow: var(--shadow-soft);">
+                    <h3 style="margin-top: 0; margin-bottom: 20px;">Opublikowane</h3>
+                    <div id="news-list">
+                        <!-- Lista aktualności ładuje się dynamicznie -->
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">Ładowanie aktualności...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Unsaved changes warning badge -->
+    <div id="unsaved-changes-badge" style="display: none;">
+        <div class="unsaved-badge-icon-circle">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+        </div>
+        <span>Uwaga! Masz niezapisane zmiany</span>
+    </div>
+
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script type="module" src="/js/admin/main.js?v=<%= Date.now() %>"></script>
+</body>
+
+</html>

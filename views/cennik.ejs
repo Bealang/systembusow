@@ -44,12 +44,12 @@
                     </div>
 
                     <div id="calc-results" class="calc-results hidden">
-                        <div id="price-toggle-wrap" class="price-toggle-wrap">
-                            <div class="price-toggle">
-                                <div class="toggle-slider"></div>
-                                <button type="button" class="toggle-btn active" id="toggle-normal">Normalny</button>
-                                <button type="button" class="toggle-btn" id="toggle-reduced">Uczniowski</button>
-                            </div>
+                        <div id="price-toggle-wrap" class="price-toggle-wrap"
+                            style="text-align: center; margin-bottom: 25px;">
+                            <select id="ticket-type-select"
+                                style="width: 100%; max-width: 350px; padding: 12px; border-radius: var(--radius-box); border: 2px solid var(--primary-color); font-size: 1rem; background-color: white; color: var(--text-color); cursor: pointer; font-family: inherit; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
+                                <option value="-1">Brak</option>
+                            </select>
                         </div>
 
                         <div class="calc-result-card reveal reveal-scale stagger-1" id="card-single">
@@ -114,7 +114,8 @@
                                 <line x1="12" y1="16" x2="12" y2="12"></line>
                                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
                             </svg>
-                            <p>Bilety miesięczne są sprzedawane na parkingu przy kościele w Miejscowości2 pod koniec miesiąca. Dokładne daty i godziny znajdziesz w <a href="/#aktualnosci">aktualnościcach</a></p>
+                            <p>Bilety miesięczne są sprzedawane [gdzie]. Dokładne daty i godziny znajdziesz w <a
+                                    href="/#aktualnosci">aktualnościcach</a></p>
                         </div>
                     </div>
 
@@ -128,4 +129,4 @@
 
     <script src="/calculator.js?v=2" defer></script>
 
-<%- include('partials/footer') %>
+    <%- include('partials/footer') %>

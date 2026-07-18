@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bodzio - FAQ (Zarządzanie)</title>
+    <link rel="shortcut icon" href="/favicon.jpg" type="image/jpeg">
+    <link rel="icon" href="/favicon.jpg" type="image/jpeg">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/admin.css">
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+</head>
+
+<body>
+    <%- include('partials/sidebar', { activePage: 'faq' }) %>
+
+    <div class="admin-container admin-main-area" id="admin-panel" style="display: block !important;">
+        <div id="notification-container"></div>
+
+        <!-- Zarządzanie FAQ -->
+        <div id="tab-faq" class="tab-content active">
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+                <!-- Formularz dodawania FAQ -->
+                <div
+                    style="background: white; padding: 20px; border-radius: var(--radius-box); border: 1px solid var(--admin-border); box-shadow: var(--shadow-soft);">
+                    <h3>Zarządzanie FAQ</h3>
+                    <p style="margin-bottom: 20px; color: var(--text-secondary); font-size: 0.95rem;">Dodaj nowe pytanie i odpowiedź do sekcji FAQ na stronie głównej.</p>
+
+                    <form id="faq-form">
+                        <div class="form-group">
+                            <label for="faq-question">Pytanie</label>
+                            <input type="text" id="faq-question" placeholder="np. Jak kupić bilet jednorazowy?" required style="padding: 12px; border: 1.5px solid var(--admin-border); background: #f8fafc;">
+                        </div>
+                        <div class="form-group">
+                            <label for="faq-answer">Odpowiedź</label>
+                            <textarea id="faq-answer" rows="4" placeholder="Wprowadź treść odpowiedzi..." required
+                                style="width: 100%; padding: 12px; border: 1.5px solid var(--admin-border); border-radius: 4px; font-family: inherit; background: #f8fafc; resize: vertical;"></textarea>
+                        </div>
+                        <button type="submit" id="faq-save-btn" class="btn-primary" style="padding: 12px 24px;">Dodaj</button>
+                    </form>
+                </div>
+
+                <!-- Lista pytań FAQ -->
+                <div
+                    style="background: white; padding: 20px; border-radius: var(--radius-box); border: 1px solid var(--admin-border); box-shadow: var(--shadow-soft);">
+                    <h3>Pytania</h3>
+                    <div id="faq-list-container" style="display: flex; flex-direction: column; margin-top: 20px;">
+                        <!-- Lista FAQ ładuje się dynamicznie -->
+                        <p style="color: var(--text-secondary); font-size: 0.9rem;">Ładowanie pytań...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Unsaved changes warning badge -->
+    <div id="unsaved-changes-badge" style="display: none;">
+        <div class="unsaved-badge-icon-circle">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+        </div>
+        <span>Uwaga! Masz niezapisane zmiany</span>
+    </div>
+
+    <script type="module" src="/js/admin/main.js?v=<%= Date.now() %>"></script>
+</body>
+
+</html>

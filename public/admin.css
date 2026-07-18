@@ -539,6 +539,35 @@ h3 {
     border-color: var(--admin-border);
 }
 
+/* --- Schedule upload section --- */
+.schedule-upload-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.schedule-upload-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    flex-shrink: 0;
+}
+
+/* --- Schedule status bar --- */
+.schedule-status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding: 10px 14px;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 6px;
+    gap: 8px;
+}
+
 /* --- Schedule Editor Modernization --- */
 .schedule-toolbar {
     display: flex;
@@ -598,11 +627,12 @@ h3 {
 }
 
 #schedule-table-container {
-    max-height: 550px;
+    max-height: 324px; /* exactly 4 rows: 4×72px + 3×12px gap */
     overflow-y: auto;
     padding-right: 5px;
     margin-bottom: 20px;
     scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
 }
 
 .empty-state {
@@ -801,9 +831,15 @@ h3 {
     background: #f8fafc;
 }
 
-#save-schedule-btn {
+#save-schedule-btn,
+.schedule-save-btn {
     width: auto;
-    min-width: 200px;
+    min-width: 180px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    font-weight: 700;
 }
 
 @media (max-width: 992px) {
@@ -899,6 +935,33 @@ h3 {
         width: 100%;
         justify-content: center;
     }
+
+    /* Upload section — stack on mobile */
+    .schedule-upload-wrap {
+        flex-direction: column;
+    }
+
+    .schedule-upload-form {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .schedule-upload-form input[type="file"] {
+        width: 100%;
+    }
+
+    .schedule-upload-form .btn-primary {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Status bar — stack text below count on mobile */
+    .schedule-status-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
 }
 
 /* Toast Notifications */
@@ -910,7 +973,56 @@ h3 {
     display: flex;
     flex-direction: column-reverse;
     gap: 10px;
+    transition: bottom 0.3s ease;
 }
+
+/* Unsaved changes badge & inputs */
+#unsaved-changes-badge {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9998;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 30px;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    font-weight: 500;
+    color: #0f172a;
+    font-size: 0.85rem;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    opacity: 0;
+    transform: translateY(10px);
+}
+
+#unsaved-changes-badge.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.unsaved-badge-icon-circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    background: #fefce8;
+    border-radius: 50%;
+    color: #ca8a04;
+    flex-shrink: 0;
+}
+
+/* Light yellow highlighting for unsaved inputs */
+.unsaved-input {
+    background-color: #fefce8 !important;
+    border-color: #ca8a04 !important;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
 
 .toast {
     padding: 16px 24px;

@@ -23,6 +23,31 @@ export function showStatus(msg, type = 'success') {
     }, 4000);
 }
 
+/**
+ * Show or hide the fixed "unsaved changes" badge.
+ * Works on any admin page that has #unsaved-changes-badge in its HTML.
+ */
+export function showBadge(visible) {
+    const badge = document.getElementById('unsaved-changes-badge');
+    const notifContainer = document.getElementById('notification-container');
+    if (!badge) return;
+
+    if (visible) {
+        badge.style.display = 'flex';
+        requestAnimationFrame(() => badge.classList.add('visible'));
+    } else {
+        badge.classList.remove('visible');
+        setTimeout(() => {
+            if (!badge.classList.contains('visible')) badge.style.display = 'none';
+        }, 300);
+    }
+
+    if (notifContainer) {
+        notifContainer.style.bottom = visible ? '80px' : '20px';
+    }
+}
+
+
 export function initTabs() {
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');

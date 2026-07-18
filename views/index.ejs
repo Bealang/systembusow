@@ -27,6 +27,16 @@
         </div>
     </header>
 
+    <% if (typeof alert !== 'undefined' && alert && alert.active && alert.text) { %>
+        <div class="important-alert-bar">
+            <div class="container alert-container">
+                <div class="alert-content">
+                    <span class="alert-text"><%= alert.text %></span>
+                </div>
+            </div>
+        </div>
+    <% } %>
+
     <main class="main-content" id="rozklad">
         <!-- Departures -->
         <section class="departures-section">

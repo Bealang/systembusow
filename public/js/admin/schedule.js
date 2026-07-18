@@ -3,7 +3,62 @@ import { showStatus } from './ui.js';
 
 let containerSchedule, btnAddRow, btnSaveSchedule;
 
-function createScheduleRow(time = "12:00", notes = []) {
+// Snapshot of loaded schedule (for dirty-checking)
+let loadedSnapshot = null;
+let scheduleIsLoaded = false;
+
+// ─── Unsaved-changes badge ────────────────────────────────────────────────────
+
+function showBadge(visible) {
+    const badge = document.getElementById('unsaved-changes-badge');
+    const notifContainer = document.getElementById('notification-container');
+    if (!badge) return;
+
+    if (visible) {
+        badge.style.display = 'flex';
+        requestAnimationFrame(() => badge.classList.add('visible'));
+    } else {
+        badge.classList.remove('visible');
+        setTimeout(() => {
+            if (!badge.classList.contains('visible')) badge.style.display = 'none';
+        }, 300);
+    }
+
+    if (notifContainer) {
+        notifContainer.style.bottom = visible ? '80px' : '20px';
+    }
+}
+
+function getScheduleSnapshot() {
+    if (!containerSchedule) return null;
+    const rows = Array.from(containerSchedule.querySelectorAll('.schedule-row'));
+    return JSON.stringify(rows.map(row => ({
+        time: row.querySelector('.row-time')?.value || '',
+        notes: Array.from(row.querySelectorAll('.row-attr:checked')).map(cb => cb.dataset.symbol)
+    })));
+}
+
+function checkUnsavedChanges() {
+    if (!scheduleIsLoaded || loadedSnapshot === null) {
+        showBadge(false);
+        return;
+    }
+    const current = getScheduleSnapshot();
+    showBadge(current !== loadedSnapshot);
+}
+
+// ─── Course count helper ──────────────────────────────────────────────────────
+
+function updateCourseCount() {
+    const countEl = document.getElementById('schedule-course-count');
+    if (!countEl || !containerSchedule) return;
+    const count = containerSchedule.querySelectorAll('.schedule-row').length;
+    countEl.textContent = count;
+}
+
+// ─── Row factory ─────────────────────────────────────────────────────────────
+
+function createScheduleRow(time = '12:00', notes = []) {
     const div = document.createElement('div');
     div.className = 'schedule-row';
 
@@ -30,21 +85,40 @@ function createScheduleRow(time = "12:00", notes = []) {
         </button>
     `;
 
-    div.querySelector('.rm-row').addEventListener('click', () => div.remove());
-    div.querySelector('.row-time').addEventListener('change', () => sortScheduleDOM());
+    // Sort on time change
+    div.querySelector('.row-time').addEventListener('change', () => {
+        sortScheduleDOM();
+        checkUnsavedChanges();
+    });
+
+    // Checkbox changes
+    div.querySelectorAll('.row-attr').forEach(cb => {
+        cb.addEventListener('change', checkUnsavedChanges);
+    });
+
+    // Delete row
+    div.querySelector('.rm-row').addEventListener('click', () => {
+        div.remove();
+        updateCourseCount();
+        checkUnsavedChanges();
+    });
 
     return div;
 }
 
+// ─── Sort ─────────────────────────────────────────────────────────────────────
+
 function sortScheduleDOM() {
     const rows = Array.from(containerSchedule.querySelectorAll('.schedule-row'));
     rows.sort((a, b) => {
-        const timeA = a.querySelector('.row-time').value || "00:00";
-        const timeB = b.querySelector('.row-time').value || "00:00";
+        const timeA = a.querySelector('.row-time').value || '00:00';
+        const timeB = b.querySelector('.row-time').value || '00:00';
         return timeA.localeCompare(timeB);
     });
     rows.forEach(row => containerSchedule.appendChild(row));
 }
+
+// ─── Render ───────────────────────────────────────────────────────────────────
 
 export function renderScheduleTable(city, dayType) {
     if (!state.fullScheduleData || !state.fullScheduleData[city]) return;
@@ -52,25 +126,41 @@ export function renderScheduleTable(city, dayType) {
     const courses = state.fullScheduleData[city][dayType] || [];
     containerSchedule.innerHTML = '';
 
-    courses.forEach((course) => {
-        containerSchedule.appendChild(createScheduleRow(course.time, course.notes));
-    });
+    courses.forEach(course => containerSchedule.appendChild(createScheduleRow(course.time, course.notes)));
 
-    btnAddRow.style.display = 'inline-block';
-    btnSaveSchedule.style.display = 'block';
+    btnAddRow.style.display = 'inline-flex';
+    btnSaveSchedule.style.display = 'inline-flex';
+
+    // Show status bar
+    const statusBar = document.getElementById('schedule-status-bar');
+    if (statusBar) statusBar.style.display = 'flex';
+
+    updateCourseCount();
+
+    // Take snapshot AFTER DOM is fully rendered
+    scheduleIsLoaded = true;
+    loadedSnapshot = getScheduleSnapshot();
+    showBadge(false);
 }
+
+// ─── Load from API ────────────────────────────────────────────────────────────
 
 export async function loadAdminSchedule() {
     try {
         const res = await fetch('/api/schedule');
         state.fullScheduleData = await res.json();
         if (Object.keys(state.fullScheduleData).length === 0) {
-            state.fullScheduleData = { myslenice: { workdays: [], saturday: [], sunday: [] }, sulkowice: { workdays: [], saturday: [], sunday: [] } };
+            state.fullScheduleData = {
+                myslenice: { workdays: [], saturday: [], sunday: [] },
+                sulkowice: { workdays: [], saturday: [], sunday: [] }
+            };
         }
     } catch (e) {
-        console.error("Nie wczytano rozkładu jazdy:", e);
+        console.error('Nie wczytano rozkładu jazdy:', e);
     }
 }
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
 
 export function initSchedule() {
     loadAdminSchedule();
@@ -82,17 +172,30 @@ export function initSchedule() {
     const addCourseModal = document.getElementById('add-course-modal');
     const confirmAddBtn = document.getElementById('confirm-add-course');
 
+    // Reset state when filters change
+    ['schedule-city-select', 'schedule-day-select'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('change', () => {
+                scheduleIsLoaded = false;
+                loadedSnapshot = null;
+                showBadge(false);
+            });
+        }
+    });
+
     btnLoadSchedule.addEventListener('click', () => {
         const city = document.getElementById('schedule-city-select').value;
         const dayType = document.getElementById('schedule-day-select').value;
         renderScheduleTable(city, dayType);
     });
 
-    // Modal logic
+    // ── Modal logic ──
+
     function openModal() {
         addCourseModal.classList.add('active');
-        document.getElementById('new-course-time').value = "12:00";
-        document.querySelectorAll('#modal-attributes-container .modal-attr-checkbox').forEach(cb => cb.checked = false);
+        document.getElementById('new-course-time').value = '12:00';
+        document.querySelectorAll('#modal-attributes-container .modal-attr-checkbox').forEach(cb => (cb.checked = false));
     }
 
     function closeModal() {
@@ -100,7 +203,7 @@ export function initSchedule() {
     }
 
     document.querySelectorAll('.close-modal-btn').forEach(btn => btn.addEventListener('click', closeModal));
-    window.addEventListener('click', (e) => { if (e.target === addCourseModal) closeModal(); });
+    window.addEventListener('click', e => { if (e.target === addCourseModal) closeModal(); });
 
     btnAddRow.addEventListener('click', openModal);
 
@@ -114,15 +217,18 @@ export function initSchedule() {
         containerSchedule.appendChild(createScheduleRow(time, notes));
         sortScheduleDOM();
         closeModal();
-        showStatus('Kurs został dodany do listy (nie zapomnij zapisać zmian!).', 'success');
+        updateCourseCount();
+        checkUnsavedChanges();
+        showStatus('Kurs dodany — pamiętaj o zapisaniu zmian!', 'success');
     });
 
-    // Save schedule
+    // ── Save schedule ──
+
     btnSaveSchedule.addEventListener('click', async () => {
         const city = document.getElementById('schedule-city-select').value;
         const dayType = document.getElementById('schedule-day-select').value;
         const rows = document.querySelectorAll('.schedule-row');
-        let newCourses = [];
+        const newCourses = [];
 
         rows.forEach(row => {
             const time = row.querySelector('.row-time').value;
@@ -133,7 +239,9 @@ export function initSchedule() {
 
         newCourses.sort((a, b) => a.time.localeCompare(b.time));
         state.fullScheduleData[city][dayType] = newCourses;
-        renderScheduleTable(city, dayType);
+
+        // Hide badge optimistically
+        showBadge(false);
 
         try {
             const res = await fetch('/api/admin/schedule', {
@@ -144,11 +252,16 @@ export function initSchedule() {
             const data = await res.json();
             if (res.ok) {
                 showStatus(data.message, 'success');
+                // Re-render and take new snapshot
+                renderScheduleTable(city, dayType);
             } else {
-                showStatus(data.error || 'Błąd', 'error');
+                showStatus(data.error || 'Błąd zapisywania', 'error');
+                // Restore badge on failure
+                checkUnsavedChanges();
             }
         } catch (err) {
             showStatus('Błąd sieci/Zapisywania', 'error');
+            checkUnsavedChanges();
         }
     });
 }

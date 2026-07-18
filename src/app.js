@@ -43,7 +43,7 @@ app.set('views', config.paths.views);
 const staticOptions = {
     maxAge: '1y',
     setHeaders: (res, filePath) => {
-        if (filePath.endsWith('.html')) {
+        if (filePath.endsWith('.html') || filePath.endsWith('.js') || filePath.endsWith('.css')) {
             res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
         } else {
             res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');

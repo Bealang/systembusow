@@ -1,11 +1,67 @@
 const db = require('../config/database');
 
+function getPricingConfig() {
+    try {
+        const multRow = db.prepare("SELECT value FROM config WHERE key = 'monthly_multiplier'").get();
+        const discRow = db.prepare("SELECT value FROM config WHERE key = 'pricing_discounts'").get();
+        const singleDiscRow = db.prepare("SELECT value FROM config WHERE key = 'discounts_apply_to_single'").get();
+        
+        return {
+            multiplier: multRow && multRow.value ? parseFloat(multRow.value) : 40,
+            discounts: discRow && discRow.value ? JSON.parse(discRow.value) : [{ name: 'Uczniowski', discount: 49 }],
+            applyDiscountsToSingle: singleDiscRow ? singleDiscRow.value === '1' : false
+        };
+    } catch (e) {
+        console.error("Error fetching pricing config:", e);
+        return { multiplier: 40, discounts: [{ name: 'Uczniowski', discount: 49 }], applyDiscountsToSingle: false };
+    }
+}
+
+function updatePricingConfig(multiplier, discounts, applyDiscountsToSingle) {
+    const multValue = parseFloat(multiplier) || 40;
+    const discValue = JSON.stringify(discounts || []);
+    const singleDiscValue = applyDiscountsToSingle ? '1' : '0';
+    
+    db.prepare(`INSERT INTO config (key, value) VALUES ('monthly_multiplier', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`).run(multValue.toString());
+    db.prepare(`INSERT INTO config (key, value) VALUES ('pricing_discounts', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`).run(discValue);
+    db.prepare(`INSERT INTO config (key, value) VALUES ('discounts_apply_to_single', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value`).run(singleDiscValue);
+    
+    return { multiplier: multValue, discounts, applyDiscountsToSingle: applyDiscountsToSingle ?? false };
+}
+
+function calculateDynamicPrice(priceRow, config) {
+    const price_s = priceRow.price_s || 0;
+    const monthly_base = Math.round(price_s * config.multiplier * 100) / 100;
+    
+    const calculatedDiscounts = config.discounts.map(d => {
+        return {
+            name: d.name,
+            percentage: d.discount,
+            price: Math.round(monthly_base * (1 - d.discount / 100) * 100) / 100,
+            price_s: config.applyDiscountsToSingle
+                ? Math.round(price_s * (1 - d.discount / 100) * 100) / 100
+                : null
+        };
+    });
+
+    return {
+        stop1_id: priceRow.stop1_id,
+        stop2_id: priceRow.stop2_id,
+        price_s: price_s,
+        monthly_base: monthly_base,
+        discounts: calculatedDiscounts,
+        applyDiscountsToSingle: config.applyDiscountsToSingle ?? false
+    };
+}
+
 function getAllStops() {
     return db.prepare('SELECT * FROM stops ORDER BY sort_order ASC, id DESC').all();
 }
 
 function getAllPrices() {
-    return db.prepare('SELECT * FROM pricing').all();
+    const prices = db.prepare('SELECT * FROM pricing').all();
+    const config = getPricingConfig();
+    return prices.map(p => calculateDynamicPrice(p, config));
 }
 
 function getPricingData() {
@@ -15,7 +71,10 @@ function getPricingData() {
 function getPrice(stop1, stop2) {
     const id1 = Math.min(parseInt(stop1), parseInt(stop2));
     const id2 = Math.max(parseInt(stop1), parseInt(stop2));
-    return db.prepare('SELECT * FROM pricing WHERE stop1_id = ? AND stop2_id = ?').get(id1, id2) || null;
+    const priceRow = db.prepare('SELECT * FROM pricing WHERE stop1_id = ? AND stop2_id = ?').get(id1, id2) || null;
+    if (!priceRow) return null;
+    const config = getPricingConfig();
+    return calculateDynamicPrice(priceRow, config);
 }
 
 function addStop(name) {
@@ -44,57 +103,32 @@ function reorderStops(orders) {
     transaction(orders);
 }
 
-function savePrice(stop1_id, stop2_id, price_s, price_m, price_md) {
+function savePrice(stop1_id, stop2_id, price_s) {
     const id1 = Math.min(stop1_id, stop2_id);
     const id2 = Math.max(stop1_id, stop2_id);
 
     db.prepare(`
         INSERT INTO pricing (stop1_id, stop2_id, price_s, price_m, price_md) 
-        VALUES (?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, 0, 0)
         ON CONFLICT(stop1_id, stop2_id) DO UPDATE SET 
-            price_s=excluded.price_s, 
-            price_m=excluded.price_m, 
-            price_md=excluded.price_md
-    `).run(id1, id2, price_s, price_m, price_md);
+            price_s=excluded.price_s
+    `).run(id1, id2, price_s);
 
     return getAllPrices();
 }
 
 function bulkUpdatePrices(type, amount) {
-    let column;
-    if (type === 's') column = 'price_s';
-    if (type === 'm') column = 'price_m';
-    if (type === 'md') column = 'price_md';
-
-    if (type === 'm') {
-        db.prepare(`
-            UPDATE pricing 
-            SET price_m = MAX(0, price_m + ?),
-                price_md = ROUND(MAX(0, price_m + ?) * 0.51, 2)
-            WHERE price_m IS NOT NULL AND price_m > 0
-        `).run(amount, amount);
-    } else {
+    if (type === 's') {
         db.prepare(
-            `UPDATE pricing SET ${column} = MAX(0, ${column} + ?) WHERE ${column} IS NOT NULL AND ${column} > 0`
+            `UPDATE pricing SET price_s = MAX(0, price_s + ?) WHERE price_s IS NOT NULL AND price_s > 0`
         ).run(amount);
     }
-
-    return getAllPrices();
-}
-
-function recalculateMonthly() {
-    db.prepare(`
-        UPDATE pricing 
-        SET price_m = ROUND(price_s * 40, 2),
-            price_md = ROUND(price_s * 40 * 0.51, 2)
-        WHERE price_s IS NOT NULL AND price_s > 0
-    `).run();
-
     return getAllPrices();
 }
 
 module.exports = {
+    getPricingConfig, updatePricingConfig,
     getAllStops, getAllPrices, getPricingData, getPrice,
     addStop, updateStop, deleteStop, reorderStops,
-    savePrice, bulkUpdatePrices, recalculateMonthly
+    savePrice, bulkUpdatePrices
 };

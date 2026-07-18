@@ -6,4 +6,15 @@ function requireAuth(req, res, next) {
     }
 }
 
+function requireAdminView(req, res, next) {
+    if (req.session.isAdmin) {
+        next();
+    } else {
+        res.redirect('/admin');
+    }
+}
+
 module.exports = requireAuth;
+module.exports.requireAdminView = requireAdminView;
+
+

@@ -3,6 +3,7 @@ import { initSchedule } from './schedule.js';
 import { initPricing } from './pricing.js';
 import { initFaq } from './faq.js';
 import { initAttributes } from './attributes.js';
+import { initAlert } from './alert.js';
 
 export async function checkAuth() {
     try {
@@ -17,6 +18,7 @@ export async function checkAuth() {
             initPricing();
             initFaq();
             initAttributes();
+            initAlert();
         } else {
             document.getElementById('login-screen').style.display = 'flex';
             document.getElementById('admin-header-main').style.display = 'none';
@@ -42,9 +44,7 @@ export function initLoginForm() {
             const data = await res.json();
 
             if (data.success) {
-                document.getElementById('username').value = '';
-                document.getElementById('password').value = '';
-                checkAuth();
+                window.location.href = '/admin';
             } else {
                 const alertEl = document.getElementById('login-alert');
                 alertEl.textContent = data.message;

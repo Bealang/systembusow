@@ -1,13 +1,24 @@
 const router = require('express').Router();
 const scheduleService = require('../services/scheduleService');
+const alertService = require('../services/alertService');
+const { requireAdminView } = require('../middleware/auth');
+
 
 router.get('/', (req, res) => {
+    let alert = null;
+    try {
+        alert = alertService.getAlert();
+    } catch (error) {
+        console.error("Błąd podczas pobierania alertu dla strony głównej:", error);
+    }
+
     res.render('index', {
         title: 'Bodzio - Busy Sułkowice Kraków',
         description: 'Szukasz busa do Krakowa? Oferujemy regularne przewozy pasażerskie. Sprawdź aktualny rozkład jazdy online!',
         keywords: 'rozklad jazdy, bus cennik, busy, przewoz osob, bilety miesieczne, bus kraków, busy sułkowice',
         activePage: 'home',
-        isHome: true
+        isHome: true,
+        alert: alert
     });
 });
 
@@ -60,7 +71,31 @@ router.get('/rozklad', (req, res) => {
 });
 
 router.get('/admin', (req, res) => {
-    res.render('admin');
+    if (req.session.isAdmin) {
+        res.render('admin/index', { activePage: 'dashboard' });
+    } else {
+        res.render('admin/login');
+    }
+});
+
+router.get('/admin/cennik', requireAdminView, (req, res) => {
+    res.render('admin/cennik', { activePage: 'cennik' });
+});
+
+router.get('/admin/rozklad-jazdy', requireAdminView, (req, res) => {
+    res.render('admin/rozklad-jazdy', { activePage: 'rozklad-jazdy' });
+});
+
+router.get('/admin/regulamin', requireAdminView, (req, res) => {
+    res.render('admin/regulamin', { activePage: 'regulamin' });
+});
+
+router.get('/admin/aktualnosci', requireAdminView, (req, res) => {
+    res.render('admin/aktualnosci', { activePage: 'aktualnosci' });
+});
+
+router.get('/admin/faq', requireAdminView, (req, res) => {
+    res.render('admin/faq', { activePage: 'faq' });
 });
 
 // Redirect /index to root / for clean URLs
@@ -69,3 +104,4 @@ router.get('/index', (req, res) => {
 });
 
 module.exports = router;
+

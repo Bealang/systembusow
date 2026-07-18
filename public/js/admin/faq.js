@@ -1,5 +1,43 @@
 import state from './state.js';
-import { showStatus } from './ui.js';
+import { showStatus, showBadge } from './ui.js';
+
+// Snapshot of what was loaded into the form for edit (null = "add new" mode)
+let formSnapshot = null;
+
+// ─── Dirty check ─────────────────────────────────────────────────────────────
+
+function getFormValues() {
+    return {
+        question: (document.getElementById('faq-question')?.value ?? '').trim(),
+        answer: (document.getElementById('faq-answer')?.value ?? '').trim()
+    };
+}
+
+function checkUnsavedChanges() {
+    const questionEl = document.getElementById('faq-question');
+    const answerEl = document.getElementById('faq-answer');
+    const question = (questionEl?.value ?? '').trim();
+    const answer = (answerEl?.value ?? '').trim();
+
+    if (formSnapshot === null) {
+        // Add-new mode — no yellow, no badge (nothing saved to compare against)
+        questionEl?.classList.remove('unsaved-input');
+        answerEl?.classList.remove('unsaved-input');
+        showBadge(false);
+        return;
+    }
+
+    // Edit mode — compare field by field
+    const questionDirty = question !== formSnapshot.question;
+    const answerDirty   = answer   !== formSnapshot.answer;
+
+    questionEl?.classList.toggle('unsaved-input', questionDirty);
+    answerEl?.classList.toggle('unsaved-input', answerDirty);
+
+    showBadge(questionDirty || answerDirty);
+}
+
+// ─── Render ───────────────────────────────────────────────────────────────────
 
 function renderFaqList() {
     const container = document.getElementById('faq-list-container');
@@ -58,11 +96,16 @@ function renderFaqList() {
 
 function resetFaqForm() {
     state.editingFaqId = null;
+    formSnapshot = null;
+
     document.getElementById('faq-question').value = '';
     document.getElementById('faq-answer').value = '';
     document.getElementById('faq-save-btn').textContent = 'Zapisz Pytanie FAQ';
+
     const cancelBtn = document.getElementById('faq-cancel-edit');
     if (cancelBtn) cancelBtn.remove();
+
+    showBadge(false);
 }
 
 async function loadFaqData() {
@@ -71,19 +114,32 @@ async function loadFaqData() {
         state.allFaqs = await res.json();
         renderFaqList();
     } catch (e) {
-        console.error("Failed to load FAQ data", e);
+        console.error('Failed to load FAQ data', e);
     }
 }
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
 
 export function initFaq() {
     loadFaqData();
 
+    // Attach input listeners for dirty detection
+    const questionInput = document.getElementById('faq-question');
+    const answerInput = document.getElementById('faq-answer');
+    if (questionInput) questionInput.addEventListener('input', checkUnsavedChanges);
+    if (answerInput) answerInput.addEventListener('input', checkUnsavedChanges);
+
     // Global handlers
+
     window.editFaq = (id) => {
         const faq = state.allFaqs.find(f => f.id === id);
         if (!faq) return;
 
         state.editingFaqId = id;
+
+        // Take snapshot of original values
+        formSnapshot = { question: faq.question.trim(), answer: faq.answer.trim() };
+
         document.getElementById('faq-question').value = faq.question;
         document.getElementById('faq-answer').value = faq.answer;
         document.getElementById('faq-save-btn').textContent = 'Zapisz zmiany w FAQ';
@@ -98,6 +154,9 @@ export function initFaq() {
             cancelBtn.onclick = resetFaqForm;
             document.getElementById('faq-save-btn').parentNode.appendChild(cancelBtn);
         }
+
+        // Badge: not dirty yet (just loaded values)
+        showBadge(false);
 
         document.getElementById('tab-faq').scrollIntoView({ behavior: 'smooth' });
     };

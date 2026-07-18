@@ -1,8 +1,139 @@
 import state from './state.js';
 import { showStatus } from './ui.js';
 
+let currentPricingConfig = { multiplier: 40, discounts: [], applyDiscountsToSingle: false };
+let savedPricingConfig = { multiplier: 40, discounts: [], applyDiscountsToSingle: false };
+let originalSelectedPrice = '';
+
+function checkUnsavedChanges() {
+    let isDirty = false;
+
+    // 1. Check price editor
+    const priceSInput = document.getElementById('price-s');
+    const selectA = document.getElementById('price-stop-a');
+    const selectB = document.getElementById('price-stop-b');
+    
+    if (priceSInput && selectA && selectB && selectA.value && selectB.value) {
+        const currentPrice = priceSInput.value.trim();
+        const origPrice = String(originalSelectedPrice !== null && originalSelectedPrice !== undefined ? originalSelectedPrice : '').trim();
+        
+        const currentNum = parseFloat(currentPrice);
+        const origNum = parseFloat(origPrice);
+        
+        let priceDirty = false;
+        if (isNaN(currentNum) && isNaN(origNum)) {
+            priceDirty = false;
+        } else if (currentNum !== origNum) {
+            priceDirty = true;
+        }
+        
+        if (priceDirty) {
+            priceSInput.classList.add('unsaved-input');
+            isDirty = true;
+        } else {
+            priceSInput.classList.remove('unsaved-input');
+        }
+    } else if (priceSInput) {
+        priceSInput.classList.remove('unsaved-input');
+    }
+
+    // 2. Check multiplier
+    const multiplierInput = document.getElementById('config-multiplier');
+    if (multiplierInput && savedPricingConfig) {
+        const currentMultiplier = parseFloat(multiplierInput.value);
+        const origMultiplier = parseFloat(savedPricingConfig.multiplier);
+        
+        if (currentMultiplier !== origMultiplier) {
+            multiplierInput.classList.add('unsaved-input');
+            isDirty = true;
+        } else {
+            multiplierInput.classList.remove('unsaved-input');
+        }
+    }
+
+    // 2b. Check applyDiscountsToSingle checkbox
+    const singleDiscCheckbox = document.getElementById('config-discounts-single');
+    if (singleDiscCheckbox && savedPricingConfig) {
+        if (singleDiscCheckbox.checked !== (savedPricingConfig.applyDiscountsToSingle ?? false)) {
+            isDirty = true;
+        }
+    }
+
+    // 3. Check discounts
+    const nameInputs = document.querySelectorAll('.discount-input-name');
+    const percentInputs = document.querySelectorAll('.discount-input-percent');
+    
+    const currentDiscounts = [];
+    nameInputs.forEach((input, i) => {
+        const name = input.value.trim();
+        const discount = parseFloat(percentInputs[i].value);
+        currentDiscounts.push({ name, discount: isNaN(discount) ? 0 : discount });
+    });
+
+    const savedDiscounts = savedPricingConfig.discounts || [];
+    
+    let discountsChanged = false;
+    
+    if (currentDiscounts.length !== savedDiscounts.length) {
+        discountsChanged = true;
+    }
+    
+    nameInputs.forEach((input, i) => {
+        const currentName = input.value.trim();
+        const currentPercent = parseFloat(percentInputs[i].value);
+        
+        const saved = savedDiscounts[i];
+        let rowDirty = false;
+        
+        if (!saved) {
+            rowDirty = true;
+        } else if (currentName !== saved.name || currentPercent !== saved.discount) {
+            rowDirty = true;
+        }
+        
+        if (rowDirty) {
+            input.classList.add('unsaved-input');
+            if (percentInputs[i]) percentInputs[i].classList.add('unsaved-input');
+            discountsChanged = true;
+        } else {
+            input.classList.remove('unsaved-input');
+            if (percentInputs[i]) percentInputs[i].classList.remove('unsaved-input');
+        }
+    });
+
+    if (discountsChanged) {
+        isDirty = true;
+    }
+
+    // 4. Update badge visibility and shift notifications container
+    const badge = document.getElementById('unsaved-changes-badge');
+    const notifContainer = document.getElementById('notification-container');
+    if (badge) {
+        if (isDirty) {
+            badge.classList.add('visible');
+            badge.style.display = 'flex';
+        } else {
+            badge.classList.remove('visible');
+            setTimeout(() => {
+                if (!badge.classList.contains('visible')) {
+                    badge.style.display = 'none';
+                }
+            }, 300);
+        }
+    }
+    if (notifContainer) {
+        if (isDirty) {
+            notifContainer.style.bottom = '80px';
+        } else {
+            notifContainer.style.bottom = '20px';
+        }
+    }
+}
+
+
 function renderStopsList() {
     const container = document.getElementById('stops-list-container');
+    if (!container) return;
     container.innerHTML = '';
     if (state.allStops.length === 0) {
         container.innerHTML = '<p style="color: #64748b; font-size: 0.9rem;">Brak dodanych przystanków.</p>';
@@ -68,6 +199,7 @@ async function saveReorder() {
 function populatePriceDropdowns() {
     const selectA = document.getElementById('price-stop-a');
     const selectB = document.getElementById('price-stop-b');
+    if (!selectA || !selectB) return;
     const prevA = selectA.value;
     const prevB = selectB.value;
 
@@ -85,16 +217,15 @@ function populatePriceDropdowns() {
 }
 
 function updatePriceForm() {
-    state.isMonthlyManuallyEdited = false;
-    state.isMonthlyDiscountManuallyEdited = false;
-
-    const id1 = parseInt(document.getElementById('price-stop-a').value);
+    const selectA = document.getElementById('price-stop-a');
     const selectB = document.getElementById('price-stop-b');
+    const priceSInput = document.getElementById('price-s');
+    if (!selectA || !selectB || !priceSInput) return;
+
+    const id1 = parseInt(selectA.value);
     const id2 = parseInt(selectB.value);
 
-    document.getElementById('price-s').value = '';
-    document.getElementById('price-m').value = '';
-    document.getElementById('price-md').value = '';
+    priceSInput.value = '';
 
     if (!id1) {
         Array.from(selectB.options).forEach(opt => {
@@ -103,6 +234,8 @@ function updatePriceForm() {
             opt.style.cursor = '';
             opt.text = opt.text.replace(' (brak ceny)', '');
         });
+        originalSelectedPrice = '';
+        checkUnsavedChanges();
         return;
     }
 
@@ -134,37 +267,110 @@ function updatePriceForm() {
     if (id2 && id1 === id2) {
         showStatus('Przystanek A i B nie mogą być takie same!', 'error');
         selectB.value = "";
+        originalSelectedPrice = '';
+        checkUnsavedChanges();
         return;
     }
 
-    if (!id2) return;
+    if (!id2) {
+        originalSelectedPrice = '';
+        checkUnsavedChanges();
+        return;
+    }
 
     const stop1 = Math.min(id1, id2);
     const stop2 = Math.max(id1, id2);
     const price = state.allPrices.find(p => p.stop1_id === stop1 && p.stop2_id === stop2);
 
+    originalSelectedPrice = price ? price.price_s : '';
     if (price) {
-        document.getElementById('price-s').value = price.price_s;
-        document.getElementById('price-m').value = price.price_m;
-        document.getElementById('price-md').value = price.price_md;
+        const priceSInput = document.getElementById('price-s');
+        if (priceSInput) priceSInput.value = price.price_s;
     }
+    checkUnsavedChanges();
 }
 
 async function loadPricingData() {
     try {
-        const res = await fetch('/api/pricing-data');
-        const data = await res.json();
+        const [resData, resConfig] = await Promise.all([
+            fetch('/api/pricing-data'),
+            fetch('/api/pricing-config')
+        ]);
+        const data = await resData.json();
+        const config = await resConfig.json();
+        
         state.allStops = data.stops;
         state.allPrices = data.prices;
+        currentPricingConfig = config;
+        savedPricingConfig = JSON.parse(JSON.stringify(config));
+        
         renderStopsList();
         populatePriceDropdowns();
+        renderPricingConfig();
     } catch (e) {
-        console.error("Failed to load pricing data", e);
+        console.error("Failed to load pricing data or config", e);
     }
+}
+
+function renderPricingConfig() {
+    const multiplierInput = document.getElementById('config-multiplier');
+    const listContainer = document.getElementById('discounts-list-container');
+    const singleDiscCheckbox = document.getElementById('config-discounts-single');
+    if (!multiplierInput || !listContainer) return;
+    multiplierInput.value = currentPricingConfig.multiplier || 40;
+    if (singleDiscCheckbox) {
+        singleDiscCheckbox.checked = currentPricingConfig.applyDiscountsToSingle ?? false;
+    }
+    listContainer.innerHTML = '';
+    
+    if (!currentPricingConfig.discounts || currentPricingConfig.discounts.length === 0) {
+        listContainer.innerHTML = '<p style="color: #64748b; font-size: 0.9rem; padding: 10px 0;">Brak zdefiniowanych ulg. Dodaj pierwszą ulgę korzystając z formularza poniążej.</p>';
+        checkUnsavedChanges();
+        return;
+    }
+    
+    currentPricingConfig.discounts.forEach((discount, idx) => {
+        const div = document.createElement('div');
+        div.style = 'display: grid; grid-template-columns: 2fr 1fr 100px; gap: 12px; align-items: center; background: white; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.03);';
+        div.innerHTML = `
+            <div>
+                <input type="text" value="${discount.name}" class="discount-input-name" data-idx="${idx}" placeholder="Nazwa ulgi" style="width: 100%; padding: 12px; border: 1.5px solid var(--admin-border); background: #f8fafc; font-weight: 500; font-size: 0.95rem;">
+            </div>
+            <div style="display: flex; align-items: center; gap: 4px;">
+                <input type="number" value="${discount.discount}" class="discount-input-percent" data-idx="${idx}" min="0" max="100" style="width: 80px; padding: 12px; border: 1.5px solid var(--admin-border); background: #f8fafc; text-align: center; font-weight: 600; font-size: 0.95rem;">
+                <span style="font-weight: 600; color: #64748b;">%</span>
+            </div>
+            <div style="text-align: right;">
+                <button type="button" class="btn-danger" style="padding: 12px 18px; font-size: 0.85rem; border-radius: 4px; font-weight: 500;" onclick="removeDiscount(${idx})">Usuń</button>
+            </div>
+        `;
+        listContainer.appendChild(div);
+    });
+
+    const nameInputs = listContainer.querySelectorAll('.discount-input-name');
+    const percentInputs = listContainer.querySelectorAll('.discount-input-percent');
+    nameInputs.forEach(input => input.addEventListener('input', checkUnsavedChanges));
+    percentInputs.forEach(input => input.addEventListener('input', checkUnsavedChanges));
+
+    checkUnsavedChanges();
 }
 
 export function initPricing() {
     loadPricingData();
+
+    // Attach listeners for unsaved changes detection
+    const priceSInput = document.getElementById('price-s');
+    if (priceSInput) {
+        priceSInput.addEventListener('input', checkUnsavedChanges);
+    }
+    const multiplierInput = document.getElementById('config-multiplier');
+    if (multiplierInput) {
+        multiplierInput.addEventListener('input', checkUnsavedChanges);
+    }
+    const singleDiscCheckbox = document.getElementById('config-discounts-single');
+    if (singleDiscCheckbox) {
+        singleDiscCheckbox.addEventListener('change', checkUnsavedChanges);
+    }
 
     // Global handlers
     window.editStop = async (id, currentName) => {
@@ -214,175 +420,273 @@ export function initPricing() {
         }
     };
 
-    // Add stop form
-    document.getElementById('add-stop-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = document.getElementById('new-stop-name').value.trim();
-        if (!name) {
-            showStatus('Wpisz nazwę przystanku przed dodaniem.', 'error');
-            return;
-        }
-        try {
-            const res = await fetch('/api/admin/stops', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                state.allStops = data.stops;
-                localStorage.removeItem('przystanki');
-                localStorage.removeItem('mleczek_pricing');
-                document.getElementById('new-stop-name').value = '';
-                showStatus(`Przystanek "${name}" został dodany.`, 'success');
-                loadPricingData();
-            } else {
-                showStatus(data.error || 'Błąd dodawania przystanku.', 'error');
+    window.removeDiscount = (idx) => {
+        // First sync current inputs to array
+        syncDiscountsFromInputs();
+        currentPricingConfig.discounts.splice(idx, 1);
+        renderPricingConfig();
+    };
+
+    function syncDiscountsFromInputs() {
+        const nameInputs = document.querySelectorAll('.discount-input-name');
+        const percentInputs = document.querySelectorAll('.discount-input-percent');
+        const updatedDiscounts = [];
+        
+        nameInputs.forEach((input, i) => {
+            const name = input.value.trim();
+            const discount = parseFloat(percentInputs[i].value);
+            if (name && !isNaN(discount)) {
+                updatedDiscounts.push({ name, discount });
             }
-        } catch (e) {
-            showStatus('Błąd połączenia przy dodawaniu przystanku.', 'error');
-            console.error("Add stop error:", e);
-        }
-    });
+        });
+        currentPricingConfig.discounts = updatedDiscounts;
+    }
+
+    // Add discount
+    const addDiscountForm = document.getElementById('add-discount-form');
+    if (addDiscountForm) {
+        addDiscountForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            syncDiscountsFromInputs();
+            
+            const nameInput = document.getElementById('new-discount-name');
+            const percentInput = document.getElementById('new-discount-percent');
+            if (!nameInput || !percentInput) return;
+            const name = nameInput.value.trim();
+            const percent = parseFloat(percentInput.value);
+            if (!name || isNaN(percent)) return;
+            
+            if (!currentPricingConfig.discounts) currentPricingConfig.discounts = [];
+            currentPricingConfig.discounts.push({ name, discount: percent });
+            
+            nameInput.value = '';
+            percentInput.value = '';
+            renderPricingConfig();
+        });
+    }
+
+    // Save pricing config
+    const saveConfigBtn = document.getElementById('save-pricing-config-btn');
+    if (saveConfigBtn) {
+        saveConfigBtn.addEventListener('click', async () => {
+            syncDiscountsFromInputs();
+
+            const multiplierInput = document.getElementById('config-multiplier');
+            const singleDiscCheckbox = document.getElementById('config-discounts-single');
+            if (!multiplierInput) return;
+            const multiplier = parseFloat(multiplierInput.value);
+            if (isNaN(multiplier) || multiplier <= 0) {
+                showStatus('Wprowadź poprawną wartość (wielokrotność biletów).', 'error');
+                return;
+            }
+            const applyDiscountsToSingle = singleDiscCheckbox ? singleDiscCheckbox.checked : false;
+            
+            try {
+                const res = await fetch('/api/admin/pricing-config', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ multiplier, discounts: currentPricingConfig.discounts, applyDiscountsToSingle })
+                });
+                if (res.ok) {
+                    showStatus('Ustawienia cennika zostały pomyślnie zapisane.', 'success');
+                    localStorage.removeItem('mleczek_pricing');
+                    currentPricingConfig.applyDiscountsToSingle = applyDiscountsToSingle;
+                    savedPricingConfig = JSON.parse(JSON.stringify(currentPricingConfig));
+                    renderPricingConfig();
+                } else {
+                    showStatus('Błąd podczas zapisywania konfiguracji.', 'error');
+                }
+            } catch (e) {
+                showStatus('Błąd połączenia podczas zapisywania konfiguracji.', 'error');
+                console.error("Config save error:", e);
+            }
+        });
+    }
+
+    // Add stop form
+    const addStopForm = document.getElementById('add-stop-form');
+    if (addStopForm) {
+        addStopForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nameInput = document.getElementById('new-stop-name');
+            if (!nameInput) return;
+            const name = nameInput.value.trim();
+            if (!name) {
+                showStatus('Wpisz nazwę przystanku przed dodaniem.', 'error');
+                return;
+            }
+            try {
+                const res = await fetch('/api/admin/stops', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    state.allStops = data.stops;
+                    localStorage.removeItem('przystanki');
+                    localStorage.removeItem('mleczek_pricing');
+                    nameInput.value = '';
+                    showStatus(`Przystanek "${name}" został dodany.`, 'success');
+                    loadPricingData();
+                } else {
+                    showStatus(data.error || 'Błąd dodawania przystanku.', 'error');
+                }
+            } catch (e) {
+                showStatus('Błąd połączenia przy dodawaniu przystanku.', 'error');
+                console.error("Add stop error:", e);
+            }
+        });
+    }
 
     // Price dropdowns
-    document.getElementById('price-stop-a').addEventListener('change', updatePriceForm);
-    document.getElementById('price-stop-b').addEventListener('change', updatePriceForm);
-
-    // Auto-calculate monthly
-    document.getElementById('price-s').addEventListener('input', (e) => {
-        const val = parseFloat(e.target.value);
-        if (!isNaN(val)) {
-            const priceM = val * 2 * 20;
-            if (!state.isMonthlyManuallyEdited) document.getElementById('price-m').value = priceM.toFixed(2);
-            if (!state.isMonthlyDiscountManuallyEdited) {
-                const currentPriceM = !state.isMonthlyManuallyEdited ? priceM : parseFloat(document.getElementById('price-m').value);
-                document.getElementById('price-md').value = !isNaN(currentPriceM) ? (currentPriceM * 0.51).toFixed(2) : '';
-            }
-        } else {
-            if (!state.isMonthlyManuallyEdited) document.getElementById('price-m').value = '';
-            if (!state.isMonthlyDiscountManuallyEdited) document.getElementById('price-md').value = '';
-        }
-    });
-
-    document.getElementById('price-m').addEventListener('input', (e) => {
-        state.isMonthlyManuallyEdited = e.target.value.trim() !== '';
-        const val = parseFloat(e.target.value);
-        if (!isNaN(val) && !state.isMonthlyDiscountManuallyEdited) {
-            document.getElementById('price-md').value = (val * 0.51).toFixed(2);
-        } else if (!state.isMonthlyDiscountManuallyEdited) {
-            document.getElementById('price-md').value = '';
-        }
-    });
-
-    document.getElementById('price-md').addEventListener('input', (e) => {
-        state.isMonthlyDiscountManuallyEdited = e.target.value.trim() !== '';
-    });
+    const priceStopA = document.getElementById('price-stop-a');
+    const priceStopB = document.getElementById('price-stop-b');
+    if (priceStopA) priceStopA.addEventListener('change', updatePriceForm);
+    if (priceStopB) priceStopB.addEventListener('change', updatePriceForm);
 
     // Save price
-    document.getElementById('save-price-btn').addEventListener('click', async () => {
-        const stop1_id = parseInt(document.getElementById('price-stop-a').value);
-        const stop2_id = parseInt(document.getElementById('price-stop-b').value);
-        const price_s = parseFloat(document.getElementById('price-s').value);
-        const price_m = parseFloat(document.getElementById('price-m').value);
-        const price_md = parseFloat(document.getElementById('price-md').value);
+    const savePriceBtn = document.getElementById('save-price-btn');
+    if (savePriceBtn) {
+        savePriceBtn.addEventListener('click', async () => {
+            const stopA = document.getElementById('price-stop-a');
+            const stopB = document.getElementById('price-stop-b');
+            const priceSInput = document.getElementById('price-s');
+            if (!stopA || !stopB || !priceSInput) return;
+            const stop1_id = parseInt(stopA.value);
+            const stop2_id = parseInt(stopB.value);
+            const price_s = parseFloat(priceSInput.value);
 
-        if (!stop1_id || !stop2_id || isNaN(price_s)) {
-            showStatus('Wypełnij przynajmniej cenę jednorazową.', 'error');
-            return;
-        }
-        if (stop1_id === stop2_id) {
-            showStatus('Błąd: Przystanek A i B są identyczne.', 'error');
-            return;
-        }
-
-        try {
-            const res = await fetch('/api/admin/pricing', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ stop1_id, stop2_id, price_s, price_m, price_md })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                state.allPrices = data.prices;
-                localStorage.removeItem('mleczek_pricing');
-                showStatus('Cena relacji została pomyślnie zapisana.', 'success');
-                updatePriceForm();
-            } else {
-                showStatus(data.error || 'Błąd podczas zapisywania ceny.', 'error');
+            if (!stop1_id || !stop2_id || isNaN(price_s)) {
+                showStatus('Wypełnij cenę jednorazową.', 'error');
+                return;
             }
-        } catch (e) {
-            showStatus('Błąd połączenia podczas zapisywania ceny.', 'error');
-            console.error("Price save error:", e);
-        }
-    });
-
-    // Bulk price update
-    document.getElementById('bulk-price-btn').addEventListener('click', async () => {
-        const type = document.getElementById('bulk-price-type').value;
-        const amount = parseFloat(document.getElementById('bulk-price-amount').value);
-
-        if (isNaN(amount) || amount === 0) {
-            showStatus('Wprowadź poprawną kwotę zmiany (np. 2.00 lub -1.50).', 'error');
-            return;
-        }
-
-        let typeName = type === 's' ? 'jednorazowych' : 'miesięcznych';
-        if (type === 'm') typeName += ' (oraz automatycznie obliczyć ulgowe)';
-        const actionStr = amount > 0 ? 'zwiększyć' : 'zmniejszyć';
-        const absAmount = Math.abs(amount).toFixed(2);
-
-        if (!confirm(`Na pewno chcesz ${actionStr} ceny wszystkich biletów ${typeName} o ${absAmount} zł? Zmiana dotknie tylko przystanków, które mają już wprowadzoną cenę.`)) return;
-
-        try {
-            const res = await fetch('/api/admin/pricing/bulk', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type, amount })
-            });
-            const contentType = res.headers.get("content-type");
-            if (!contentType || !contentType.includes("application/json")) {
-                throw new Error("Serwer zwrócił nieoczekiwany błąd (prawdopodobnie wymaga restartu).");
+            if (stop1_id === stop2_id) {
+                showStatus('Błąd: Przystanek A i B są identyczne.', 'error');
+                return;
             }
-            const data = await res.json();
-            if (res.ok) {
-                state.allPrices = data.prices;
-                localStorage.removeItem('mleczek_pricing');
-                showStatus(data.message, 'success');
-                updatePriceForm();
-                document.getElementById('bulk-price-amount').value = '';
-            } else {
-                showStatus(data.error || 'Błąd podczas masowej zmiany cen.', 'error');
-            }
-        } catch (e) {
-            showStatus(`Błąd podczas masowej zmiany cen: ${e.message}`, 'error');
-            console.error("Bulk price save error:", e);
-        }
-    });
 
-    // Recalculate monthly
-    const recalculateBtn = document.getElementById('recalculate-monthly-btn');
-    if (recalculateBtn) {
-        recalculateBtn.addEventListener('click', async () => {
-            if (!confirm('Czy na pewno chcesz przeliczyć i zaktualizować ceny biletów miesięcznych normalnych i ulgowych dla WSZYSTKICH relacji na podstawie cen jednorazowych? Ta operacja nadpisze obecne ceny miesięczne.')) return;
             try {
-                const res = await fetch('/api/admin/pricing/recalculate-monthly', {
+                const res = await fetch('/api/admin/pricing', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ stop1_id, stop2_id, price_s })
                 });
                 const data = await res.json();
                 if (res.ok) {
                     state.allPrices = data.prices;
                     localStorage.removeItem('mleczek_pricing');
-                    showStatus(data.message, 'success');
+                    showStatus('Cena relacji została pomyślnie zapisana.', 'success');
+                    
+                    const stop1 = Math.min(stop1_id, stop2_id);
+                    const stop2 = Math.max(stop1_id, stop2_id);
+                    const price = state.allPrices.find(p => p.stop1_id === stop1 && p.stop2_id === stop2);
+                    originalSelectedPrice = price ? price.price_s : '';
                     updatePriceForm();
                 } else {
-                    showStatus(data.error || 'Błąd podczas przeliczania biletów.', 'error');
+                    showStatus(data.error || 'Błąd podczas zapisywania ceny.', 'error');
                 }
             } catch (e) {
-                showStatus('Błąd połączenia podczas przeliczania biletów.', 'error');
-                console.error("Recalculate monthly error:", e);
+                showStatus('Błąd połączenia podczas zapisywania ceny.', 'error');
+                console.error("Price save error:", e);
             }
         });
     }
+
+    // Bulk price update
+    const bulkPriceBtn = document.getElementById('bulk-price-btn');
+    if (bulkPriceBtn) {
+        bulkPriceBtn.addEventListener('click', async () => {
+            const bulkPriceAmountInput = document.getElementById('bulk-price-amount');
+            if (!bulkPriceAmountInput) return;
+            const amount = parseFloat(bulkPriceAmountInput.value);
+
+            if (isNaN(amount) || amount === 0) {
+                showStatus('Wprowadź poprawną kwotę zmiany (np. 2.00 lub -1.50).', 'error');
+                return;
+            }
+
+            const typeName = 'jednorazowych';
+            const actionStr = amount > 0 ? 'zwiększyć' : 'zmniejszyć';
+            const absAmount = Math.abs(amount).toFixed(2);
+
+            if (!confirm(`Na pewno chcesz ${actionStr} ceny wszystkich biletów ${typeName} o ${absAmount} zł? Zmiana dotknie tylko przystanków, które mają już wprowadzoną cenę.`)) return;
+
+            try {
+                const res = await fetch('/api/admin/pricing/bulk', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount })
+                });
+                const contentType = res.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    throw new Error("Serwer zwrócił nieoczekiwany błąd (prawdopodobnie wymaga restartu).");
+                }
+                const data = await res.json();
+                if (res.ok) {
+                    state.allPrices = data.prices;
+                    localStorage.removeItem('mleczek_pricing');
+                    showStatus(data.message, 'success');
+                    
+                    const stopA = document.getElementById('price-stop-a');
+                    const stopB = document.getElementById('price-stop-b');
+                    if (stopA && stopB) {
+                        const id1 = parseInt(stopA.value);
+                        const id2 = parseInt(stopB.value);
+                        if (id1 && id2) {
+                            const stop1 = Math.min(id1, id2);
+                            const stop2 = Math.max(id1, id2);
+                            const price = state.allPrices.find(p => p.stop1_id === stop1 && p.stop2_id === stop2);
+                            originalSelectedPrice = price ? price.price_s : '';
+                        }
+                    }
+                    updatePriceForm();
+                    bulkPriceAmountInput.value = '';
+                } else {
+                    showStatus(data.error || 'Błąd podczas masowej zmiany cen.', 'error');
+                }
+            } catch (e) {
+                showStatus(`Błąd podczas masowej zmiany cen: ${e.message}`, 'error');
+                console.error("Bulk price save error:", e);
+            }
+        });
+    }
+}
+
+export function initQuickBulkPrice() {
+    const btn = document.getElementById('quick-bulk-price-btn');
+    if (!btn) return;
+
+    btn.addEventListener('click', async () => {
+        const amountInput = document.getElementById('quick-bulk-price-amount');
+        if (!amountInput) return;
+        const amount = parseFloat(amountInput.value);
+
+        if (isNaN(amount) || amount === 0) {
+            showStatus('Wprowadź poprawną kwotę zmiany (np. 1.00 lub -0.50).', 'error');
+            return;
+        }
+
+        const actionStr = amount > 0 ? 'zwiększyć' : 'zmniejszyć';
+        const absAmount = Math.abs(amount).toFixed(2);
+
+        if (!confirm(`Na pewno chcesz ${actionStr} ceny biletów jednorazowych o ${absAmount} zł?`)) return;
+
+        try {
+            const res = await fetch('/api/admin/pricing/bulk', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                showStatus(data.message, 'success');
+                amountInput.value = '';
+            } else {
+                showStatus(data.error || 'Błąd podczas masowej zmiany cen.', 'error');
+            }
+        } catch (e) {
+            showStatus(`Błąd podczas masowej zmiany cen: ${e.message}`, 'error');
+        }
+    });
 }

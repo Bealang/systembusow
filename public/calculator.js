@@ -6,9 +6,10 @@
 (function() {
     let allStopsClient = [];
     let lastFetchedPrice = null;
-    let currentPriceType = localStorage.getItem('testbus_price_type') || 'normal';
+    let currentPriceType = localStorage.getItem('testbus_price_type') || '-1';
+    let globalDiscounts = [];
 
-    function initCalculator() {
+    async function initCalculator() {
         const calcFrom = document.getElementById('calc-from');
         const calcTo = document.getElementById('calc-to');
 
@@ -21,10 +22,8 @@
         const priceSingle = document.getElementById('price-single');
         const priceMonthly = document.getElementById('price-monthly');
         const priceToggleWrap = document.getElementById('price-toggle-wrap');
-        const toggleNormal = document.getElementById('toggle-normal');
-        const toggleReduced = document.getElementById('toggle-reduced');
+        const ticketTypeSelect = document.getElementById('ticket-type-select');
         const monthlyLabel = document.getElementById('monthly-label');
-        const priceToggle = document.querySelector('.price-toggle');
         const priceInfoNotes = document.getElementById('price-info-notes');
         const noteReduced = document.getElementById('note-reduced');
 
@@ -60,6 +59,37 @@
         }
 
         document.addEventListener('click', () => closeAllSelect(null));
+
+        // Fetch pricing config globally
+        try {
+            const configRes = await fetch('/api/pricing-config');
+            if (configRes.ok) {
+                const config = await configRes.json();
+                globalDiscounts = config.discounts || [];
+                populateTicketTypeSelect();
+            }
+        } catch (e) {
+            console.error("Failed to load pricing config", e);
+        }
+
+        function populateTicketTypeSelect() {
+            if (!ticketTypeSelect) return;
+            ticketTypeSelect.innerHTML = '<option value="-1">Bilet normalny</option>';
+            globalDiscounts.forEach((discount, idx) => {
+                const option = document.createElement('option');
+                option.value = idx.toString();
+                option.textContent = `${discount.name} (-${discount.discount}%)`;
+                ticketTypeSelect.appendChild(option);
+            });
+            
+            // Restore previous selection if exists
+            if (Array.from(ticketTypeSelect.options).some(opt => opt.value === currentPriceType)) {
+                ticketTypeSelect.value = currentPriceType;
+            } else {
+                currentPriceType = '-1';
+                ticketTypeSelect.value = '-1';
+            }
+        }
 
         // Lazy load Pricing Stops
         if (pricingSection) {
@@ -140,35 +170,42 @@
         function updatePriceDisplay() {
             if (!lastFetchedPrice) return;
 
-            if (priceSingle) {
-                priceSingle.textContent = lastFetchedPrice.price_s.toFixed(2).replace('.', ',') + ' zł';
-            }
-
-            if (currentPriceType === 'reduced') {
-                if (priceMonthly) priceMonthly.textContent = (lastFetchedPrice.price_md || 0).toFixed(2).replace('.', ',') + ' zł';
-                if (monthlyLabel) monthlyLabel.textContent = "Miesięczny ulgowy";
-                if (toggleNormal) toggleNormal.classList.remove('active');
-                if (toggleReduced) toggleReduced.classList.add('active');
-                if (priceToggle) priceToggle.setAttribute('data-active', 'reduced');
-                if (noteReduced) noteReduced.classList.remove('hidden');
-            } else {
-                if (priceMonthly) priceMonthly.textContent = (lastFetchedPrice.price_m || 0).toFixed(2).replace('.', ',') + ' zł';
+            if (currentPriceType === '-1') {
+                // Normal ticket - always show base price
+                if (priceSingle) priceSingle.textContent = lastFetchedPrice.price_s.toFixed(2).replace('.', ',') + ' zł';
+                if (priceMonthly) priceMonthly.textContent = (lastFetchedPrice.monthly_base || 0).toFixed(2).replace('.', ',') + ' zł';
                 if (monthlyLabel) monthlyLabel.textContent = "Miesięczny normalny";
-                if (toggleNormal) toggleNormal.classList.add('active');
-                if (toggleReduced) toggleReduced.classList.remove('active');
-                if (priceToggle) priceToggle.setAttribute('data-active', 'normal');
                 if (noteReduced) noteReduced.classList.add('hidden');
+            } else {
+                const idx = parseInt(currentPriceType);
+                if (lastFetchedPrice.discounts && lastFetchedPrice.discounts[idx]) {
+                    const discountData = lastFetchedPrice.discounts[idx];
+
+                    // Monthly discounted price
+                    if (priceMonthly) priceMonthly.textContent = (discountData.price || 0).toFixed(2).replace('.', ',') + ' zł';
+                    if (monthlyLabel) monthlyLabel.textContent = "Miesięczny " + discountData.name;
+
+                    // Single ticket: show discounted price if enabled, else base price
+                    if (priceSingle) {
+                        if (lastFetchedPrice.applyDiscountsToSingle && discountData.price_s !== null && discountData.price_s !== undefined) {
+                            priceSingle.textContent = discountData.price_s.toFixed(2).replace('.', ',') + ' zł';
+                        } else {
+                            priceSingle.textContent = lastFetchedPrice.price_s.toFixed(2).replace('.', ',') + ' zł';
+                        }
+                    }
+                }
+                // Show note about ID if discount is applied
+                if (noteReduced) noteReduced.classList.remove('hidden');
             }
         }
 
-        [toggleNormal, toggleReduced].forEach(btn => {
-            if (!btn) return;
-            btn.addEventListener('click', () => {
-                currentPriceType = btn.id === 'toggle-normal' ? 'normal' : 'reduced';
+        if (ticketTypeSelect) {
+            ticketTypeSelect.addEventListener('change', (e) => {
+                currentPriceType = e.target.value;
                 localStorage.setItem('testbus_price_type', currentPriceType);
                 updatePriceDisplay();
             });
-        });
+        }
 
         async function calculatePrice() {
             if (!calcFrom.value || !calcTo.value) return;

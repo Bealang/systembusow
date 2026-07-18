@@ -13,6 +13,15 @@ router.get('/api/pricing-data', (req, res) => {
     }
 });
 
+router.get('/api/pricing-config', (req, res) => {
+    try {
+        res.json(pricingService.getPricingConfig());
+    } catch (error) {
+        console.error("Błąd bazy danych (pricing-config):", error);
+        res.status(500).json({ error: 'Błąd podczas pobierania konfiguracji cennika.' });
+    }
+});
+
 router.get('/api/stops', (req, res) => {
     try {
         res.json({ stops: pricingService.getAllStops() });
@@ -30,6 +39,19 @@ router.get('/api/price', (req, res) => {
     } catch (error) {
         console.error("Błąd bazy danych (price):", error);
         res.status(500).json({ error: 'Błąd podczas pobierania ceny.' });
+    }
+});
+
+// --- ADMIN: Config ---
+
+router.post('/api/admin/pricing-config', requireAuth, (req, res) => {
+    const { multiplier, discounts, applyDiscountsToSingle } = req.body;
+    try {
+        const config = pricingService.updatePricingConfig(multiplier, discounts, applyDiscountsToSingle);
+        res.json({ success: true, message: 'Konfiguracja cennika została zapisana.', config });
+    } catch (error) {
+        console.error("Błąd bazy danych (admin-pricing-config):", error);
+        res.status(500).json({ error: 'Błąd podczas zapisywania konfiguracji cennika.' });
     }
 });
 
@@ -94,14 +116,14 @@ router.delete('/api/admin/stops/:id', requireAuth, (req, res) => {
 // --- ADMIN: Pricing ---
 
 router.post('/api/admin/pricing', requireAuth, (req, res) => {
-    const { stop1_id, stop2_id, price_s, price_m, price_md } = req.body;
+    const { stop1_id, stop2_id, price_s } = req.body;
     const id1 = Math.min(stop1_id, stop2_id);
     const id2 = Math.max(stop1_id, stop2_id);
 
     if (id1 === id2) return res.status(400).json({ error: 'Przystanek początkowy i końcowy muszą być różne.' });
 
     try {
-        const prices = pricingService.savePrice(stop1_id, stop2_id, price_s, price_m, price_md);
+        const prices = pricingService.savePrice(stop1_id, stop2_id, price_s);
         res.json({ success: true, message: 'Cennik zaktualizowany.', prices });
     } catch (error) {
         console.error("Błąd bazy danych (admin-pricing):", error);
@@ -110,11 +132,8 @@ router.post('/api/admin/pricing', requireAuth, (req, res) => {
 });
 
 router.post('/api/admin/pricing/bulk', requireAuth, (req, res) => {
-    const { type, amount } = req.body;
-
-    if (!['s', 'm', 'md'].includes(type)) {
-        return res.status(400).json({ error: 'Nieprawidłowy typ biletu.' });
-    }
+    const { amount } = req.body;
+    const type = 's'; // Force 's' (jednorazowe)
 
     const parsedAmount = parseFloat(amount);
     if (isNaN(parsedAmount) || parsedAmount === 0) {
@@ -125,22 +144,12 @@ router.post('/api/admin/pricing/bulk', requireAuth, (req, res) => {
         const prices = pricingService.bulkUpdatePrices(type, parsedAmount);
         res.json({
             success: true,
-            message: `Pomyślnie zaktualizowano ceny (${parsedAmount > 0 ? '+' : ''}${parsedAmount.toFixed(2)} zł).`,
+            message: `Pomyślnie zaktualizowano ceny biletów jednorazowych (${parsedAmount > 0 ? '+' : ''}${parsedAmount.toFixed(2)} zł).`,
             prices
         });
     } catch (error) {
         console.error("Błąd bazy danych (admin-pricing-bulk):", error);
-        res.status(500).json({ error: 'Błąd podczas aktulizacji cen.' });
-    }
-});
-
-router.post('/api/admin/pricing/recalculate-monthly', requireAuth, (req, res) => {
-    try {
-        const prices = pricingService.recalculateMonthly();
-        res.json({ success: true, message: 'Pomyślnie przeliczono ceny biletów miesięcznych dla wszystkich relacji.', prices });
-    } catch (error) {
-        console.error("Błąd bazy danych (recalculate-monthly):", error);
-        res.status(500).json({ error: 'Błąd podczas przeliczania biletów miesięcznych.' });
+        res.status(500).json({ error: 'Błąd podczas aktualizacji cen.' });
     }
 });
 

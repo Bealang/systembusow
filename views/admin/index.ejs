@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TwojaNazwa - Panel Administratora</title>
+    <link rel="shortcut icon" href="/favicon.jpg" type="image/jpeg">
+    <link rel="icon" href="/favicon.jpg" type="image/jpeg">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/admin.css">
+    <style>
+        .admin-dashboard-card {
+            background: white;
+            padding: 25px;
+            border-radius: var(--radius-box);
+            border: 1px solid var(--admin-border);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            height: 100%;
+            cursor: pointer;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .admin-dashboard-card:hover {
+            border-color: var(--admin-accent);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .quick-actions-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        .quick-action-box {
+            background: white;
+            padding: 25px;
+            border-radius: var(--radius-box);
+            border: 1px solid var(--admin-border);
+            box-shadow: var(--shadow-soft);
+        }
+
+        .quick-action-box h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--admin-border);
+            padding-bottom: 10px;
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--admin-primary);
+        }
+    </style>
+</head>
+
+<body>
+    <%- include('partials/sidebar', { activePage: 'dashboard' }) %>
+
+        <div class="admin-container admin-main-area" id="admin-panel" style="display: block !important;">
+            <div id="notification-container"></div>
+
+            <div class="welcome-section"
+                style="margin-bottom: 40px; background: white; padding: 30px; border-radius: var(--radius-box); border: 1px solid var(--admin-border); box-shadow: var(--shadow-soft);">
+                <h1 style="color: var(--admin-primary); font-weight: 800; font-size: 2.2rem; margin: 0 0 10px 0;">Witaj
+                    z powrotem!</h1>
+                <p style="color: #64748b; margin: 0; font-size: 1.1rem;">Zarządzaj serwisem TwojaNazwa z poziomu tego
+                    panelu.</p>
+            </div>
+
+            <h2 style="margin-bottom: 25px; font-weight: 800; color: var(--admin-primary);">Szybka nawigacja</h2>
+            <div class="admin-cards-grid"
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 50px;">
+                <a href="/admin/rozklad-jazdy" style="text-decoration: none; color: inherit;">
+                    <div class="admin-dashboard-card">
+                        <div style="color: var(--admin-accent); margin-bottom: 15px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                        </div>
+                        <h3 style="margin: 0 0 8px 0; font-size: 1.25rem;">Rozkład Jazdy</h3>
+                        <p style="margin: 0; color: #64748b; font-size: 0.85rem; line-height: 1.4;">Edycja i usuwanie
+                            kursów, zarządzanie oznaczeniami.</p>
+                    </div>
+                </a>
+                <a href="/admin/cennik" style="text-decoration: none; color: inherit;">
+                    <div class="admin-dashboard-card">
+                        <div style="color: var(--admin-accent); margin-bottom: 15px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <line x1="12" y1="1" x2="12" y2="23"></line>
+                                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                            </svg>
+                        </div>
+                        <h3 style="margin: 0 0 8px 0; font-size: 1.25rem;">Cennik</h3>
+                        <p style="margin: 0; color: #64748b; font-size: 0.85rem; line-height: 1.4;">Zarządzanie
+                            przystankami, cenami relacji oraz ulgami.</p>
+                    </div>
+                </a>
+                <a href="/admin/regulamin" style="text-decoration: none; color: inherit;">
+                    <div class="admin-dashboard-card">
+                        <div style="color: var(--admin-accent); margin-bottom: 15px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                            </svg>
+                        </div>
+                        <h3 style="margin: 0 0 8px 0; font-size: 1.25rem;">Regulamin</h3>
+                        <p style="margin: 0; color: #64748b; font-size: 0.85rem; line-height: 1.4;">Przesyłanie nowego
+                            pliku regulaminu przewozów PDF.</p>
+                    </div>
+                </a>
+                <a href="/admin/aktualnosci" style="text-decoration: none; color: inherit;">
+                    <div class="admin-dashboard-card">
+                        <div style="color: var(--admin-accent); margin-bottom: 15px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M19 20l-7-7-7 7V4h14v16z"></path>
+                            </svg>
+                        </div>
+                        <h3 style="margin: 0 0 8px 0; font-size: 1.25rem;">Aktualności</h3>
+                        <p style="margin: 0; color: #64748b; font-size: 0.85rem; line-height: 1.4;">Publikowanie
+                            ogłoszeń oraz ważnego czerwonego alertu.</p>
+                    </div>
+                </a>
+                <a href="/admin/faq" style="text-decoration: none; color: inherit;">
+                    <div class="admin-dashboard-card">
+                        <div style="color: var(--admin-accent); margin-bottom: 15px;">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                        </div>
+                        <h3 style="margin: 0 0 8px 0; font-size: 1.25rem;">FAQ</h3>
+                        <p style="margin: 0; color: #64748b; font-size: 0.85rem; line-height: 1.4;">Zarządzanie
+                            pytaniami i odpowiedziami w sekcji FAQ.</p>
+                    </div>
+                </a>
+            </div>
+
+            <h2 style="margin-bottom: 15px; font-weight: 800; color: var(--admin-primary);">Szybkie akcje</h2>
+            <div class="quick-actions-container">
+                <!-- Ważny alert -->
+                <div class="quick-action-box">
+                    <h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            style="color: #d32f2f;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        Ważny alert
+                    </h3>
+                    <form id="alert-form">
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="alert-text" style="font-weight: 600; font-size: 0.9rem;">Treść alertu na
+                                czerwonym pasku</label>
+                            <textarea id="alert-text" rows="3"
+                                placeholder="np. Utrudnienia na trasie. Zostaw puste aby ukryć."
+                                style="width: 100%; padding: 12px; border: 1.5px solid var(--admin-border); border-radius: var(--radius-btn); font-family: inherit; font-size: 0.95rem; resize: vertical; background: #f8fafc;"></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary"
+                            style="padding: 12px 30px; background-color: #d32f2f; color: white; border: none; font-weight: 700; cursor: pointer; width: 100%;">Zapisz
+                            alert</button>
+                    </form>
+                </div>
+
+                <!-- Dodanie aktualności -->
+                <div class="quick-action-box">
+                    <h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            style="color: var(--admin-primary);">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        Szybka aktualność
+                    </h3>
+                    <form id="quick-news-form">
+                        <div class="form-group">
+                            <label for="quick-news-title" style="font-weight: 600; font-size: 0.9rem;">Tytuł
+                                ogłoszenia</label>
+                            <input type="text" id="quick-news-title" required placeholder="Wprowadź tytuł..."
+                                style="width: 100%; padding: 12px; border: 1.5px solid var(--admin-border); border-radius: var(--radius-btn); background: #f8fafc;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="quick-news-content" style="font-weight: 600; font-size: 0.9rem;">Treść</label>
+                            <textarea id="quick-news-content" rows="3" required placeholder="Wprowadź treść..."
+                                style="width: 100%; padding: 12px; border: 1.5px solid var(--admin-border); border-radius: var(--radius-btn); font-family: inherit; font-size: 0.95rem; resize: vertical; background: #f8fafc;"></textarea>
+                        </div>
+                        <button type="submit" class="btn-primary" style="padding: 12px 24px; width: 100%;">Dodaj
+                            aktualność</button>
+                    </form>
+                </div>
+
+                <!-- Szybka zmiana cen -->
+                <div class="quick-action-box">
+                    <h3>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            style="color: var(--admin-primary);">
+                            <line x1="12" y1="1" x2="12" y2="23"></line>
+                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                        </svg>
+                        Szybka zmiana cen
+                    </h3>
+                    <form id="quick-bulk-price-form">
+                        <p style="margin-bottom: 20px; color: #64748b; font-size: 0.85rem; line-height: 1.4;">Zmienia
+                            ceny <strong>wszystkich biletów jednorazowych</strong> o stałą kwotę (dodatnią np. 1.00 lub
+                            ujemną np. -0.50).</p>
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="quick-bulk-price-amount" style="font-weight: 600; font-size: 0.9rem;">Kwota
+                                zmiany (zł)</label>
+                            <input type="number" step="0.10" id="quick-bulk-price-amount"
+                                placeholder="np. 1.00 lub -0.50" required
+                                style="width: 100%; padding: 12px; border: 1.5px solid var(--admin-border); border-radius: var(--radius-btn); background: #f8fafc;">
+                        </div>
+                        <button type="button" id="quick-bulk-price-btn" class="btn-primary"
+                            style="padding: 12px 24px; width: 100%;">Zastosuj zmianę cen</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script type="module" src="/js/admin/main.js?v=<%= Date.now() %>"></script>
+</body>
+
+</html>

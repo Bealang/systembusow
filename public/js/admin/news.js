@@ -1,8 +1,34 @@
 import state from './state.js';
-import { showStatus } from './ui.js';
+import { showStatus, showBadge } from './ui.js';
+
+// Snapshot for edit mode (null = add-new mode)
+let newsFormSnapshot = null;
+
+function checkNewsUnsaved() {
+    const titleEl = document.getElementById('news-title');
+    const title = (titleEl?.value ?? '').trim();
+    const quillText = state.quill ? state.quill.getText().trim() : '';
+    const hasContent = title.length > 0 || quillText.length > 0;
+
+    if (!hasContent) {
+        showBadge(false);
+        return;
+    }
+
+    if (newsFormSnapshot === null) {
+        // Add-new mode: any content = unsaved
+        showBadge(true);
+    } else {
+        // Edit mode: compare with snapshot
+        const quillHtml = state.quill ? state.quill.root.innerHTML : '';
+        const changed = title !== newsFormSnapshot.title || quillHtml !== newsFormSnapshot.content;
+        showBadge(changed);
+    }
+}
 
 function renderNewsList(newsList, total = 0) {
     const listDiv = document.getElementById('news-list');
+    if (!listDiv) return;
     listDiv.innerHTML = '';
     if (newsList.length === 0) {
         listDiv.innerHTML = '<p>Brak dodanych aktualności.</p>';
@@ -81,18 +107,78 @@ async function deleteNews(id) {
 function cancelEditing() {
     if (window.deselectImage) window.deselectImage();
     state.editingNewsId = null;
-    document.getElementById('news-title').value = '';
-    state.quill.root.innerHTML = '';
-    formBtn.textContent = 'Zapisz Publikację';
-    cancelEditBtn.style.display = 'none';
+    newsFormSnapshot = null;
+    const titleEl = document.getElementById('news-title');
+    if (titleEl) titleEl.value = '';
+    if (state.quill) state.quill.root.innerHTML = '';
+    if (formBtn) formBtn.textContent = 'Zapisz Publikację';
+    if (cancelEditBtn) cancelEditBtn.style.display = 'none';
+    showBadge(false);
 }
 
 let formBtn, cancelEditBtn;
 
 export function initNews() {
+    // Upload schedule image
+    const uploadForm = document.getElementById('upload-form');
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fileInput = document.getElementById('rozklad_image');
+            if (!fileInput || !fileInput.files[0]) return;
+
+            const formData = new FormData();
+            formData.append('rozklad_image', fileInput.files[0]);
+
+            try {
+                const res = await fetch('/api/admin/upload-image', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    showStatus('Pomyślnie zaktualizowano plik rozkładu (.png)', 'success');
+                    fileInput.value = '';
+                } else {
+                    showStatus(data.error || 'Błąd podczas wgrywania rozkładu', 'error');
+                }
+            } catch (err) {
+                showStatus('Wystąpił krytyczny błąd połączenia przy wgrywaniu rozkładu.', 'error');
+                console.error("Critical upload error:", err);
+            }
+        });
+    }
+
+    // Upload regulamin PDF
+    const uploadRegulaminForm = document.getElementById('upload-regulamin-form');
+    if (uploadRegulaminForm) {
+        uploadRegulaminForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fileInput = document.getElementById('regulamin_file');
+            if (!fileInput || !fileInput.files[0]) return;
+
+            const formData = new FormData();
+            formData.append('regulamin_file', fileInput.files[0]);
+
+            try {
+                const res = await fetch('/api/admin/upload-regulamin', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    showStatus('Pomyślnie zaktualizowano plik regulaminu (.pdf)', 'success');
+                    fileInput.value = '';
+                } else {
+                    showStatus(data.error || 'Błąd podczas wgrywania regulaminu', 'error');
+                }
+            } catch (err) {
+                showStatus('Wystąpił krytyczny błąd połączenia przy wgrywaniu regulaminu.', 'error');
+                console.error("Critical regulamin upload error:", err);
+            }
+        });
+    }
+
+    const newsForm = document.getElementById('news-form');
+    if (!newsForm) return;
+
     loadAdminNews();
 
-    formBtn = document.querySelector('#news-form button[type="submit"]');
+    formBtn = newsForm.querySelector('button[type="submit"]');
 
     // Cancel edit button
     cancelEditBtn = document.createElement('button');
@@ -108,6 +194,16 @@ export function initNews() {
     // Global handlers for onclick in HTML
     window.cancelEditing = cancelEditing;
 
+    // After Quill and title input are ready, wire up unsaved-change listeners
+    // We use a short delay so Quill is fully initialized by imageEditor.js
+    setTimeout(() => {
+        const titleEl = document.getElementById('news-title');
+        if (titleEl) titleEl.addEventListener('input', checkNewsUnsaved);
+        if (state.quill) {
+            state.quill.on('text-change', checkNewsUnsaved);
+        }
+    }, 300);
+
     window.editNews = (id) => {
         fetch('/api/news')
             .then(res => res.json())
@@ -115,26 +211,40 @@ export function initNews() {
                 const newsItem = allNews.find(n => n.id === id);
                 if (newsItem) {
                     state.editingNewsId = id;
-                    document.getElementById('news-title').value = newsItem.title;
-                    state.quill.root.innerHTML = newsItem.content;
-                    formBtn.textContent = 'Zapisz zmiany (Edycja)';
-                    cancelEditBtn.style.display = 'inline-block';
-                    document.querySelector('.admin-container').scrollIntoView({ behavior: 'smooth' });
+                    const titleEl = document.getElementById('news-title');
+                    if (titleEl) titleEl.value = newsItem.title;
+                    if (state.quill) state.quill.root.innerHTML = newsItem.content;
+
+                    // Take snapshot of original values
+                    newsFormSnapshot = {
+                        title: newsItem.title.trim(),
+                        content: newsItem.content
+                    };
+
+                    if (formBtn) formBtn.textContent = 'Zapisz zmiany (Edycja)';
+                    if (cancelEditBtn) cancelEditBtn.style.display = 'inline-block';
+                    const container = document.querySelector('.admin-container');
+                    if (container) container.scrollIntoView({ behavior: 'smooth' });
+
+                    // Not dirty yet — just loaded
+                    showBadge(false);
                 }
             });
     };
 
     // News form submit
-    document.getElementById('news-form').addEventListener('submit', async (e) => {
+    newsForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         if (window.deselectImage) window.deselectImage();
-        const title = document.getElementById('news-title').value;
-        const content = state.quill.root.innerHTML;
+        const titleEl = document.getElementById('news-title');
+        if (!titleEl) return;
+        const title = titleEl.value;
+        const content = state.quill ? state.quill.root.innerHTML : '';
         if (!title || title.trim() === '') {
             showStatus('Nie można opublikować: Brakuje tytułu aktualności!', 'error');
             return;
         }
-        if (state.quill.getText().trim() === '') {
+        if (state.quill && state.quill.getText().trim() === '') {
             showStatus('Nie można opublikować: Treść wiadomości nie może być pusta.', 'error');
             return;
         }
@@ -151,6 +261,7 @@ export function initNews() {
             const data = await res.json();
             if (res.ok) {
                 showStatus(state.editingNewsId ? 'Aktualność została pomyślnie zedytowana.' : 'Nowa aktualność została opublikowana!', 'success');
+                newsFormSnapshot = null;
                 cancelEditing();
                 loadAdminNews(1, false);
             } else {
@@ -161,52 +272,41 @@ export function initNews() {
             console.error("News saving error:", err);
         }
     });
+}
 
-    // Upload schedule image
-    document.getElementById('upload-form').addEventListener('submit', async (e) => {
+export function initQuickNews() {
+    const form = document.getElementById('quick-news-form');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const fileInput = document.getElementById('rozklad_image');
-        if (!fileInput.files[0]) return;
+        const titleInput = document.getElementById('quick-news-title');
+        const contentInput = document.getElementById('quick-news-content');
+        if (!titleInput || !contentInput) return;
 
-        const formData = new FormData();
-        formData.append('rozklad_image', fileInput.files[0]);
-
-        try {
-            const res = await fetch('/api/admin/upload-image', { method: 'POST', body: formData });
-            const data = await res.json();
-            if (res.ok) {
-                showStatus('Pomyślnie zaktualizowano plik rozkładu (.png)', 'success');
-                fileInput.value = '';
-            } else {
-                showStatus(data.error || 'Błąd podczas wgrywania rozkładu', 'error');
-            }
-        } catch (err) {
-            showStatus('Wystąpił krytyczny błąd połączenia przy wgrywaniu rozkładu.', 'error');
-            console.error("Critical upload error:", err);
+        const title = titleInput.value.trim();
+        const content = contentInput.value.trim();
+        if (!title || !content) {
+            showStatus('Wypełnij wszystkie pola.', 'error');
+            return;
         }
-    });
-
-    // Upload regulamin PDF
-    document.getElementById('upload-regulamin-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const fileInput = document.getElementById('regulamin_file');
-        if (!fileInput.files[0]) return;
-
-        const formData = new FormData();
-        formData.append('regulamin_file', fileInput.files[0]);
 
         try {
-            const res = await fetch('/api/admin/upload-regulamin', { method: 'POST', body: formData });
+            const res = await fetch('/api/admin/news', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, content })
+            });
             const data = await res.json();
-            if (res.ok) {
-                showStatus('Pomyślnie zaktualizowano plik regulaminu (.pdf)', 'success');
-                fileInput.value = '';
+            if (res.ok && data.success) {
+                showStatus('Nowa aktualność została opublikowana!', 'success');
+                titleInput.value = '';
+                contentInput.value = '';
             } else {
-                showStatus(data.error || 'Błąd podczas wgrywania regulaminu', 'error');
+                showStatus(data.error || 'Błąd podczas zapisywania aktualności.', 'error');
             }
         } catch (err) {
-            showStatus('Wystąpił krytyczny błąd połączenia przy wgrywaniu regulaminu.', 'error');
-            console.error("Critical regulamin upload error:", err);
+            showStatus('Błąd połączenia podczas publikacji.', 'error');
         }
     });
 }
