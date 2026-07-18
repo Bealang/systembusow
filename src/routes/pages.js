@@ -14,7 +14,7 @@ router.get('/', (req, res) => {
     }
 
     res.render('index', {
-        title: 'Bodzio - Busy Sułkowice Kraków',
+        title: 'TwojaNazwa - Busy Sułkowice Kraków',
         description: 'Szukasz busa do Krakowa? Oferujemy regularne przewozy pasażerskie. Sprawdź aktualny rozkład jazdy online!',
         keywords: 'rozklad jazdy, bus cennik, busy, przewoz osob, bilety miesieczne, bus kraków, busy sułkowice',
         activePage: 'home',
@@ -25,7 +25,7 @@ router.get('/', (req, res) => {
 
 router.get('/cennik', (req, res) => {
     res.render('cennik', {
-        title: 'Bodzio - Cennik',
+        title: 'TwojaNazwa - Cennik',
         description: 'Sprawdź ceny biletów jednorazowych oraz miesięcznych dla wszystkich połączeń.',
         keywords: 'cennik busy, ceny biletów, bilet miesięczny',
         activePage: 'cennik',
@@ -35,7 +35,7 @@ router.get('/cennik', (req, res) => {
 
 router.get('/kontakt', (req, res) => {
     res.render('kontakt', {
-        title: 'Bodzio - Kontakt',
+        title: 'TwojaNazwa - Kontakt',
         description: 'Skontaktuj się z nami. Dane firmy, numer telefonu.',
         keywords: 'kontakt, telefon',
         activePage: 'kontakt',
@@ -45,7 +45,7 @@ router.get('/kontakt', (req, res) => {
 
 router.get('/prywatnosc', (req, res) => {
     res.render('prywatnosc', {
-        title: 'Bodzio - Polityka prywatności',
+        title: 'TwojaNazwa - Polityka prywatności',
         description: 'Polityka prywatności serwisu. Dowiedz się, jak dbamy o Twoje dane.',
         keywords: '',
         activePage: 'prywatnosc',
@@ -57,7 +57,7 @@ router.get('/rozklad', (req, res) => {
     try {
         const { schedule, attributes } = scheduleService.getScheduleWithAttributes();
         res.render('rozklad', {
-            title: 'Bodzio - Rozkład Jazdy',
+            title: 'TwojaNazwa - Rozkład Jazdy',
             description: 'Sprawdź aktualny rozkład jazdy busów. Godziny odjazdów i szczegóły połączeń.',
             keywords: 'rozklad jazdy, odjazdy, busy, przewozy',
             activePage: 'rozklad',
