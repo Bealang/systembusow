@@ -29,22 +29,76 @@ function showBadge(visible) {
     }
 }
 
+function normalizeTime(t) {
+    if (!t) return '12:00';
+    const s = String(t).trim();
+    const parts = s.split(':');
+    if (parts.length >= 2) {
+        const h = parts[0].padStart(2, '0');
+        const m = parts[1].padStart(2, '0');
+        return `${h}:${m}`;
+    }
+    return s;
+}
+
+function normalizeNotes(notes) {
+    if (!notes || !Array.isArray(notes)) return '[]';
+    const cleaned = notes.map(n => String(n).trim()).filter(Boolean).sort();
+    return JSON.stringify(cleaned);
+}
+
 function getScheduleSnapshot() {
     if (!containerSchedule) return null;
     const rows = Array.from(containerSchedule.querySelectorAll('.schedule-row'));
     return JSON.stringify(rows.map(row => ({
-        time: row.querySelector('.row-time')?.value || '',
-        notes: Array.from(row.querySelectorAll('.row-attr:checked')).map(cb => cb.dataset.symbol)
+        time: normalizeTime(row.querySelector('.row-time')?.value),
+        notes: Array.from(row.querySelectorAll('.row-attr:checked')).map(cb => cb.dataset.symbol).sort()
     })));
 }
 
 function checkUnsavedChanges() {
+    if (!containerSchedule) return;
+
     if (!scheduleIsLoaded || loadedSnapshot === null) {
+        const rowElements = Array.from(containerSchedule.querySelectorAll('.schedule-row'));
+        rowElements.forEach(row => {
+            row.classList.remove('unsaved-input');
+            const timeInput = row.querySelector('.row-time');
+            if (timeInput) timeInput.classList.remove('unsaved-input');
+        });
         showBadge(false);
         return;
     }
-    const current = getScheduleSnapshot();
-    showBadge(current !== loadedSnapshot);
+
+    const currentSnapshotStr = getScheduleSnapshot();
+    const isOverallDirty = currentSnapshotStr !== loadedSnapshot;
+
+    const rowElements = Array.from(containerSchedule.querySelectorAll('.schedule-row'));
+
+    rowElements.forEach((row) => {
+        const timeInput = row.querySelector('.row-time');
+        const currentTime = normalizeTime(timeInput?.value);
+        const checkedSymbols = Array.from(row.querySelectorAll('.row-attr:checked')).map(cb => cb.dataset.symbol);
+        const currentNotes = normalizeNotes(checkedSymbols);
+
+        let rowDirty = false;
+        if (row.dataset.isNew === 'true') {
+            rowDirty = true;
+        } else {
+            const origTime = row.dataset.origTime || '';
+            const origNotes = row.dataset.origNotes || '[]';
+            if (currentTime !== origTime || currentNotes !== origNotes) {
+                rowDirty = true;
+            }
+        }
+
+        row.classList.toggle('unsaved-input', rowDirty);
+        if (timeInput) {
+            timeInput.classList.toggle('unsaved-input', rowDirty);
+        }
+    });
+
+    showBadge(isOverallDirty);
 }
 
 // ─── Course count helper ──────────────────────────────────────────────────────
@@ -58,12 +112,15 @@ function updateCourseCount() {
 
 // ─── Row factory ─────────────────────────────────────────────────────────────
 
-function createScheduleRow(time = '12:00', notes = []) {
+function createScheduleRow(time = '12:00', notes = [], isNew = false) {
     const div = document.createElement('div');
     div.className = 'schedule-row';
+    div.dataset.isNew = isNew ? 'true' : 'false';
+
+    const normTime = normalizeTime(time);
 
     const checkboxesHtml = state.allAttributes.map(attr => {
-        const isChecked = notes.includes(attr.symbol);
+        const isChecked = Array.isArray(notes) && notes.includes(attr.symbol);
         return `
             <label class="variant-tag" style="display: inline-flex; align-items: center; gap: 4px; margin-right: 8px; cursor: pointer;">
                 <input type="checkbox" class="row-attr" data-symbol="${attr.symbol}" ${isChecked ? 'checked' : ''}>
@@ -74,7 +131,7 @@ function createScheduleRow(time = '12:00', notes = []) {
 
     div.innerHTML = `
         <div class="schedule-time-wrap">
-            <input type="time" class="row-time input-time" value="${time}" required>
+            <input type="time" class="row-time input-time" value="${normTime}" required>
         </div>
         <div class="schedule-tags-wrap">
             ${checkboxesHtml || '<span style="color: #94a3b8; font-size: 0.85rem;">Brak oznaczeń</span>'}
@@ -85,18 +142,28 @@ function createScheduleRow(time = '12:00', notes = []) {
         </button>
     `;
 
+    const timeInput = div.querySelector('.row-time');
+
+    // Capture exact initial rendered state directly from DOM elements
+    div.dataset.origTime = timeInput ? (timeInput.value || normTime) : normTime;
+    div.dataset.origNotes = normalizeNotes(
+        Array.from(div.querySelectorAll('.row-attr:checked')).map(cb => cb.dataset.symbol)
+    );
+
     // Clicking anywhere on the tile (except the delete button, labels and checkboxes) focuses the time input
     div.addEventListener('click', (e) => {
         if (e.target.closest('.rm-row') || e.target.closest('.variant-tag') || e.target.closest('input[type="checkbox"]')) return;
-        const timeInput = div.querySelector('.row-time');
         if (e.target !== timeInput) {
             timeInput.focus();
             timeInput.showPicker?.();
         }
     });
 
+    // Check for changes on typing
+    timeInput.addEventListener('input', checkUnsavedChanges);
+
     // Sort on time change (preserving scroll position)
-    div.querySelector('.row-time').addEventListener('change', () => {
+    timeInput.addEventListener('change', () => {
         sortScheduleDOM();
         checkUnsavedChanges();
     });
@@ -139,7 +206,7 @@ export function renderScheduleTable(city, dayType) {
     const courses = state.fullScheduleData[city][dayType] || [];
     containerSchedule.innerHTML = '';
 
-    courses.forEach(course => containerSchedule.appendChild(createScheduleRow(course.time, course.notes)));
+    courses.forEach(course => containerSchedule.appendChild(createScheduleRow(course.time, course.notes, false)));
 
     btnAddRow.style.display = 'inline-flex';
     btnSaveSchedule.style.display = 'inline-flex';
@@ -153,7 +220,7 @@ export function renderScheduleTable(city, dayType) {
     // Take snapshot AFTER DOM is fully rendered
     scheduleIsLoaded = true;
     loadedSnapshot = getScheduleSnapshot();
-    showBadge(false);
+    checkUnsavedChanges();
 }
 
 // ─── Load from API ────────────────────────────────────────────────────────────
@@ -227,7 +294,7 @@ export function initSchedule() {
             notes.push(cb.dataset.symbol);
         });
 
-        containerSchedule.appendChild(createScheduleRow(time, notes));
+        containerSchedule.appendChild(createScheduleRow(time, notes, true));
         sortScheduleDOM();
         closeModal();
         updateCourseCount();

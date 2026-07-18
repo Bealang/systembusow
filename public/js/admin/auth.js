@@ -59,6 +59,6 @@ export function initLoginForm() {
 export function initLogout() {
     document.getElementById('logout-btn-header').addEventListener('click', async () => {
         await fetch('/api/logout');
-        checkAuth();
+        window.location.href = '/';
     });
 }

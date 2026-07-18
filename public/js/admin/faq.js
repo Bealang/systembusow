@@ -16,11 +16,9 @@ function getFormValues() {
 function checkUnsavedChanges() {
     const questionEl = document.getElementById('faq-question');
     const answerEl = document.getElementById('faq-answer');
-    const question = (questionEl?.value ?? '').trim();
-    const answer = (answerEl?.value ?? '').trim();
 
     if (formSnapshot === null) {
-        // Add-new mode — no yellow, no badge (nothing saved to compare against)
+        // Add-new mode — no yellow, no badge
         questionEl?.classList.remove('unsaved-input');
         answerEl?.classList.remove('unsaved-input');
         showBadge(false);
@@ -28,6 +26,8 @@ function checkUnsavedChanges() {
     }
 
     // Edit mode — compare field by field
+    const question = (questionEl?.value ?? '').trim();
+    const answer = (answerEl?.value ?? '').trim();
     const questionDirty = question !== formSnapshot.question;
     const answerDirty   = answer   !== formSnapshot.answer;
 
@@ -98,8 +98,16 @@ function resetFaqForm() {
     state.editingFaqId = null;
     formSnapshot = null;
 
-    document.getElementById('faq-question').value = '';
-    document.getElementById('faq-answer').value = '';
+    const questionEl = document.getElementById('faq-question');
+    const answerEl = document.getElementById('faq-answer');
+    if (questionEl) {
+        questionEl.value = '';
+        questionEl.classList.remove('unsaved-input');
+    }
+    if (answerEl) {
+        answerEl.value = '';
+        answerEl.classList.remove('unsaved-input');
+    }
     document.getElementById('faq-save-btn').textContent = 'Zapisz Pytanie FAQ';
 
     const cancelBtn = document.getElementById('faq-cancel-edit');

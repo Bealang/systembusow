@@ -6,24 +6,44 @@ let newsFormSnapshot = null;
 
 function checkNewsUnsaved() {
     const titleEl = document.getElementById('news-title');
-    const title = (titleEl?.value ?? '').trim();
-    const quillText = state.quill ? state.quill.getText().trim() : '';
-    const hasContent = title.length > 0 || quillText.length > 0;
+    const editorEl = document.getElementById('news-editor');
+    const qlContainer = editorEl?.querySelector('.ql-container') || editorEl;
+    const qlToolbar = editorEl?.previousElementSibling;
 
-    if (!hasContent) {
+    if (newsFormSnapshot === null) {
+        // Add-new mode: no yellow, no badge
+        if (titleEl) titleEl.classList.remove('unsaved-input');
+        if (editorEl) editorEl.classList.remove('unsaved-input');
+        if (qlContainer) qlContainer.classList.remove('unsaved-input');
+        if (qlToolbar && qlToolbar.classList.contains('ql-toolbar')) qlToolbar.classList.remove('unsaved-input');
         showBadge(false);
         return;
     }
 
-    if (newsFormSnapshot === null) {
-        // Add-new mode: any content = unsaved
-        showBadge(true);
-    } else {
-        // Edit mode: compare with snapshot
-        const quillHtml = state.quill ? state.quill.root.innerHTML : '';
-        const changed = title !== newsFormSnapshot.title || quillHtml !== newsFormSnapshot.content;
-        showBadge(changed);
+    // Edit mode: compare with snapshot
+    const title = (titleEl?.value ?? '').trim();
+    const quillHtml = state.quill ? state.quill.root.innerHTML : '';
+
+    const titleDirty = title !== newsFormSnapshot.title;
+    const contentDirty = quillHtml !== newsFormSnapshot.content;
+
+    if (titleEl) {
+        titleEl.classList.toggle('unsaved-input', titleDirty);
     }
+
+    if (editorEl) {
+        if (contentDirty) {
+            editorEl.classList.add('unsaved-input');
+            if (qlContainer) qlContainer.classList.add('unsaved-input');
+            if (qlToolbar && qlToolbar.classList.contains('ql-toolbar')) qlToolbar.classList.add('unsaved-input');
+        } else {
+            editorEl.classList.remove('unsaved-input');
+            if (qlContainer) qlContainer.classList.remove('unsaved-input');
+            if (qlToolbar && qlToolbar.classList.contains('ql-toolbar')) qlToolbar.classList.remove('unsaved-input');
+        }
+    }
+
+    showBadge(titleDirty || contentDirty);
 }
 
 function renderNewsList(newsList, total = 0) {
@@ -109,7 +129,18 @@ function cancelEditing() {
     state.editingNewsId = null;
     newsFormSnapshot = null;
     const titleEl = document.getElementById('news-title');
-    if (titleEl) titleEl.value = '';
+    if (titleEl) {
+        titleEl.value = '';
+        titleEl.classList.remove('unsaved-input');
+    }
+    const editorEl = document.getElementById('news-editor');
+    if (editorEl) {
+        editorEl.classList.remove('unsaved-input');
+        const qlContainer = editorEl.querySelector('.ql-container');
+        if (qlContainer) qlContainer.classList.remove('unsaved-input');
+        const qlToolbar = editorEl.previousElementSibling;
+        if (qlToolbar && qlToolbar.classList.contains('ql-toolbar')) qlToolbar.classList.remove('unsaved-input');
+    }
     if (state.quill) state.quill.root.innerHTML = '';
     if (formBtn) formBtn.textContent = 'Zapisz Publikację';
     if (cancelEditBtn) cancelEditBtn.style.display = 'none';

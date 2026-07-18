@@ -1,17 +1,35 @@
-import { showStatus } from './ui.js';
+import { showStatus, showBadge } from './ui.js';
 
 export async function initAlert() {
     const alertForm = document.getElementById('alert-form');
     const alertTextInput = document.getElementById('alert-text');
 
-    if (!alertForm) return;
+    if (!alertForm || !alertTextInput) return;
+
+    let savedAlertText = '';
+
+    function checkAlertUnsaved() {
+        if (!savedAlertText || savedAlertText.length === 0) {
+            alertTextInput.classList.remove('unsaved-input');
+            showBadge(false);
+            return;
+        }
+        const currentText = alertTextInput.value.trim();
+        const isDirty = currentText !== savedAlertText;
+        alertTextInput.classList.toggle('unsaved-input', isDirty);
+        showBadge(isDirty);
+    }
+
+    alertTextInput.addEventListener('input', checkAlertUnsaved);
 
     // Load initial alert data from API
     try {
         const res = await fetch('/api/alert');
         if (res.ok) {
             const data = await res.json();
+            savedAlertText = (data.text || '').trim();
             alertTextInput.value = data.text || '';
+            checkAlertUnsaved();
         } else {
             showStatus('Błąd podczas ładowania danych alertu.', 'error');
         }
@@ -35,6 +53,8 @@ export async function initAlert() {
             const data = await res.json();
             if (res.ok && data.success) {
                 showStatus('Alert został pomyślnie zaktualizowany.', 'success');
+                savedAlertText = text;
+                checkAlertUnsaved();
             } else {
                 showStatus(data.error || 'Błąd zapisu alertu.', 'error');
             }
