@@ -27,6 +27,12 @@
                         <p style="margin: 0; color: var(--text-secondary); font-size: 0.88rem; line-height: 1.5;">
                             Aktualizuj grafikę wyświetlaną na stronie. Akceptowane formaty: <strong>PNG, JPG, WebP, AVIF</strong>
                         </p>
+                        <div style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+                            <input type="checkbox" id="toggle-schedule-image-checkbox" style="width: 18px; height: 18px; cursor: pointer;">
+                            <label for="toggle-schedule-image-checkbox" style="font-size: 0.9rem; font-weight: 500; cursor: pointer; color: var(--text-primary);">
+                                Pokaż zdjęcie rozkładu
+                            </label>
+                        </div>
                     </div>
                     <form id="upload-form" class="schedule-upload-form">
                         <input type="file" id="rozklad_image" accept="image/png, image/jpeg, image/webp, image/avif"
@@ -50,8 +56,8 @@
                     <div class="schedule-filter-group">
                         <label for="schedule-city-select">Kierunek</label>
                         <select id="schedule-city-select">
-                            <option value="myslenice">Z Miejscowości2</option>
-                            <option value="sulkowice">Z Miejscowości1</option>
+                            <option value="myslenice">Z miejscowosc2</option>
+                            <option value="sulkowice">Z miejscowosc1</option>
                         </select>
                     </div>
                     <div class="schedule-filter-group">

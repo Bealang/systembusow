@@ -31,4 +31,30 @@ function validateScheduleFormat(schedule) {
     return schedule && isValidVariant(schedule.myslenice) && isValidVariant(schedule.sulkowice);
 }
 
-module.exports = { getSchedule, getScheduleWithAttributes, updateSchedule, validateScheduleFormat };
+function getShowScheduleImage() {
+    try {
+        const row = db.prepare("SELECT value FROM config WHERE key = 'show_schedule_image'").get();
+        if (row && row.value !== undefined) {
+            return JSON.parse(row.value);
+        }
+    } catch (e) {
+        console.error("Error fetching show_schedule_image config:", e);
+    }
+    return true;
+}
+
+function setShowScheduleImage(show) {
+    db.prepare(
+        "INSERT INTO config (key, value) VALUES ('show_schedule_image', ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value"
+    ).run(JSON.stringify(!!show));
+}
+
+module.exports = {
+    getSchedule,
+    getScheduleWithAttributes,
+    updateSchedule,
+    validateScheduleFormat,
+    getShowScheduleImage,
+    setShowScheduleImage
+};
+

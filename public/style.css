@@ -579,7 +579,7 @@ section[id] {
 }
 
 .pricing-calculator {
-    max-width: 800px;
+    max-width: 950px;
     margin: 0 auto;
     background: var(--surface-color);
     border-radius: var(--radius-lg);
@@ -621,7 +621,7 @@ section[id] {
 
 .select-selected {
     width: 100%;
-    padding: 14px 45px 14px 16px;
+    padding: 14px 38px 14px 12px;
     border-radius: var(--radius-md);
     border: 2px solid var(--border-color);
     font-family: inherit;
@@ -631,6 +631,9 @@ section[id] {
     background-color: var(--surface-color);
     color: var(--text-primary);
     transition: border-color 0.3s ease, background-color 0.3s ease, color 0.3s ease, border-radius 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 
     appearance: none;
     -webkit-appearance: none;

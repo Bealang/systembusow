@@ -122,7 +122,7 @@ function createScheduleRow(time = '12:00', notes = [], isNew = false) {
     const checkboxesHtml = state.allAttributes.map(attr => {
         const isChecked = Array.isArray(notes) && notes.includes(attr.symbol);
         return `
-            <label class="variant-tag" style="display: inline-flex; align-items: center; gap: 4px; margin-right: 8px; cursor: pointer;">
+            <label class="variant-tag">
                 <input type="checkbox" class="row-attr" data-symbol="${attr.symbol}" ${isChecked ? 'checked' : ''}>
                 <span>${attr.symbol}</span>
             </label>
@@ -150,20 +150,19 @@ function createScheduleRow(time = '12:00', notes = [], isNew = false) {
         Array.from(div.querySelectorAll('.row-attr:checked')).map(cb => cb.dataset.symbol)
     );
 
-    // Clicking anywhere on the tile (except the delete button, labels and checkboxes) focuses the time input
+    // Clicking on the tile focuses the time input smoothly without interrupting with picker popup
     div.addEventListener('click', (e) => {
         if (e.target.closest('.rm-row') || e.target.closest('.variant-tag') || e.target.closest('input[type="checkbox"]')) return;
         if (e.target !== timeInput) {
             timeInput.focus();
-            timeInput.showPicker?.();
         }
     });
 
     // Check for changes on typing
     timeInput.addEventListener('input', checkUnsavedChanges);
 
-    // Sort on time change (preserving scroll position)
-    timeInput.addEventListener('change', () => {
+    // Sort on blur (when user finishes editing the field), preserving continuous typing
+    timeInput.addEventListener('blur', () => {
         sortScheduleDOM();
         checkUnsavedChanges();
     });

@@ -150,6 +150,38 @@ function cancelEditing() {
 let formBtn, cancelEditBtn;
 
 export function initNews() {
+    // Toggle schedule image visibility checkbox
+    const toggleScheduleImageCheckbox = document.getElementById('toggle-schedule-image-checkbox');
+    if (toggleScheduleImageCheckbox) {
+        fetch('/api/admin/schedule-image-config')
+            .then(res => res.json())
+            .then(data => {
+                toggleScheduleImageCheckbox.checked = !!data.showScheduleImage;
+            })
+            .catch(err => console.error("Błąd podczas pobierania ustawień zdjęcia rozkładu:", err));
+
+        toggleScheduleImageCheckbox.addEventListener('change', async (e) => {
+            const show = e.target.checked;
+            try {
+                const res = await fetch('/api/admin/toggle-schedule-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ show })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showStatus(show ? 'Włączono wyświetlanie zdjęcia rozkładu.' : 'Wyłączono wyświetlanie zdjęcia rozkładu.', 'success');
+                } else {
+                    showStatus(data.error || 'Błąd zapisu ustawień.', 'error');
+                    toggleScheduleImageCheckbox.checked = !show;
+                }
+            } catch (err) {
+                showStatus('Krytyczny błąd połączenia przy zapisie ustawień.', 'error');
+                toggleScheduleImageCheckbox.checked = !show;
+            }
+        });
+    }
+
     // Upload schedule image
     const uploadForm = document.getElementById('upload-form');
     if (uploadForm) {

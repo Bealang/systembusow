@@ -72,4 +72,24 @@ router.post('/api/admin/upload-image', requireAuth, imageUpload.single('rozklad_
     }
 });
 
+// Schedule image visibility setting
+router.get('/api/admin/schedule-image-config', requireAuth, (req, res) => {
+    try {
+        res.json({ showScheduleImage: scheduleService.getShowScheduleImage() });
+    } catch (error) {
+        res.status(500).json({ error: 'Błąd podczas pobierania ustawień zdjęcia rozkładu.' });
+    }
+});
+
+router.post('/api/admin/toggle-schedule-image', requireAuth, (req, res) => {
+    try {
+        const { show } = req.body;
+        scheduleService.setShowScheduleImage(show);
+        res.json({ success: true, showScheduleImage: scheduleService.getShowScheduleImage() });
+    } catch (error) {
+        console.error("Błąd podczas zapisu ustawienia zdjęcia rozkładu:", error);
+        res.status(500).json({ error: 'Błąd podczas zapisu ustawień.' });
+    }
+});
+
 module.exports = router;

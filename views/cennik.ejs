@@ -41,16 +41,20 @@
                             </div>
                             <input type="hidden" id="calc-to" value="">
                         </div>
+
+                        <div class="calc-group">
+                            <label>Bilet:</label>
+                            <div class="custom-select" data-target="ticket-type-select">
+                                <div class="select-selected" id="ticket-selected-display">Normalny</div>
+                                <div class="select-items select-hide" id="items-ticket-type">
+                                    <!-- Dynamicznie ładowane ulgi -->
+                                </div>
+                            </div>
+                            <input type="hidden" id="ticket-type-select" value="-1">
+                        </div>
                     </div>
 
                     <div id="calc-results" class="calc-results hidden">
-                        <div id="price-toggle-wrap" class="price-toggle-wrap"
-                            style="text-align: center; margin-bottom: 25px;">
-                            <select id="ticket-type-select"
-                                style="width: 100%; max-width: 350px; padding: 12px; border-radius: var(--radius-box); border: 2px solid var(--primary-color); font-size: 1rem; background-color: white; color: var(--text-color); cursor: pointer; font-family: inherit; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);">
-                                <option value="-1">Brak</option>
-                            </select>
-                        </div>
 
                         <div class="calc-result-card reveal reveal-scale stagger-1" id="card-single">
                             <div class="card-icon">
@@ -114,8 +118,8 @@
                                 <line x1="12" y1="16" x2="12" y2="12"></line>
                                 <line x1="12" y1="8" x2="12.01" y2="8"></line>
                             </svg>
-                            <p>Bilety miesięczne są sprzedawane [gdzie]. Dokładne daty i godziny znajdziesz w <a
-                                    href="/#aktualnosci">aktualnościcach</a></p>
+                            <p>Bilety miesięczne są sprzedawane [miejsce-sprzedaży-miesięcznych]. Dokładne daty i godziny znajdziesz w <a
+                                    href="/#aktualnosci">aktualnościach</a></p>
                         </div>
                     </div>
 

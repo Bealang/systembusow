@@ -6,7 +6,7 @@
 (function() {
     let allStopsClient = [];
     let lastFetchedPrice = null;
-    let currentPriceType = localStorage.getItem('testbus_price_type') || '-1';
+    let currentPriceType = '-1';
     let globalDiscounts = [];
 
     async function initCalculator() {
@@ -73,22 +73,72 @@
         }
 
         function populateTicketTypeSelect() {
-            if (!ticketTypeSelect) return;
-            ticketTypeSelect.innerHTML = '<option value="-1">Bilet normalny</option>';
+            const ticketContainer = document.getElementById('items-ticket-type');
+            const displayDiv = document.getElementById('ticket-selected-display');
+            if (!ticketContainer || !ticketTypeSelect) return;
+
+            // Generate discount list array
+            const options = [
+                { value: '-1', label: 'Normalny' }
+            ];
             globalDiscounts.forEach((discount, idx) => {
-                const option = document.createElement('option');
-                option.value = idx.toString();
-                option.textContent = `${discount.name} (-${discount.discount}%)`;
-                ticketTypeSelect.appendChild(option);
+                options.push({
+                    value: idx.toString(),
+                    label: `${discount.name} (-${discount.discount}%)`
+                });
             });
-            
-            // Restore previous selection if exists
-            if (Array.from(ticketTypeSelect.options).some(opt => opt.value === currentPriceType)) {
-                ticketTypeSelect.value = currentPriceType;
-            } else {
-                currentPriceType = '-1';
-                ticketTypeSelect.value = '-1';
-            }
+
+            // Set up search container and list structure
+            ticketContainer.innerHTML = `
+                <div class="select-search-container">
+                    <input type="text" class="select-search" placeholder="Wyszukaj ulgę...">
+                </div>
+                <div class="select-items-list"></div>
+            `;
+
+            const searchInput = ticketContainer.querySelector('.select-search');
+            const listContainer = ticketContainer.querySelector('.select-items-list');
+
+            // Prevent closing when clicking search input
+            searchInput.addEventListener('click', (e) => e.stopPropagation());
+
+            // Handle filter search
+            searchInput.addEventListener('input', function() {
+                const filter = this.value.toLowerCase();
+                const items = listContainer.querySelectorAll('.discount-option');
+                items.forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    item.style.display = text.includes(filter) ? '' : 'none';
+                });
+            });
+
+            // Populate options
+            options.forEach(opt => {
+                const div = document.createElement('div');
+                div.className = 'stop-option discount-option'; // uses same styling class stop-option
+                div.dataset.value = opt.value;
+                div.textContent = opt.label;
+
+                div.addEventListener('click', function() {
+                    displayDiv.textContent = this.textContent;
+                    ticketTypeSelect.value = this.dataset.value;
+                    ticketTypeSelect.dispatchEvent(new Event('change'));
+
+                    ticketContainer.classList.add('select-hide');
+                    displayDiv.classList.remove('select-arrow-active');
+
+                    searchInput.value = '';
+                    listContainer.querySelectorAll('.discount-option').forEach(item => item.style.display = '');
+                });
+
+                listContainer.appendChild(div);
+            });
+
+            // Restore previous selection
+            const initialOpt = options.find(opt => opt.value === currentPriceType) || options[0];
+            currentPriceType = initialOpt.value;
+            ticketTypeSelect.value = initialOpt.value;
+            displayDiv.textContent = initialOpt.label;
         }
 
         // Lazy load Pricing Stops

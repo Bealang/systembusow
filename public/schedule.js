@@ -160,7 +160,7 @@
 
         const now = new Date();
 
-        // Myślenice Update
+        // miejscowosc2 Update
         const mysleniceDeps = getNextDepartures(currentScheduleData.myslenice, now);
         const mTime = document.getElementById('next-myslenice-time');
         const mNotes = document.getElementById('next-myslenice-notes');
@@ -185,7 +185,7 @@
             if (mFollow) mFollow.textContent = "Następny: --:--";
         }
 
-        // Miejscowość2 Update
+        // miejscowosc1 Update
         const sulkowiceDeps = getNextDepartures(currentScheduleData.sulkowice, now);
         const sTime = document.getElementById('next-sulkowice-time');
         const sNotes = document.getElementById('next-sulkowice-notes');

@@ -14,12 +14,13 @@ router.get('/', (req, res) => {
     }
 
     res.render('index', {
-        title: 'TwojaNazwa - Busy Sułkowice Kraków',
-        description: 'Szukasz busa do Krakowa? Oferujemy regularne przewozy pasażerskie. Sprawdź aktualny rozkład jazdy online!',
-        keywords: 'rozklad jazdy, bus cennik, busy, przewoz osob, bilety miesieczne, bus kraków, busy sułkowice',
+        title: 'TwojaNazwa - Busy miejscowosc1 miejscowosc2',
+        description: 'Szukasz busa do miejscowosc2? Oferujemy regularne przewozy pasażerskie. Sprawdź aktualny rozkład jazdy online!',
+        keywords: 'rozklad jazdy, bus cennik, busy, przewoz osob, bilety miesieczne, bus miejscowosc2, busy miejscowosc1',
         activePage: 'home',
         isHome: true,
-        alert: alert
+        alert: alert,
+        showScheduleImage: scheduleService.getShowScheduleImage()
     });
 });
 

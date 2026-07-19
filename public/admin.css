@@ -33,7 +33,8 @@ body {
     font-weight: 500;
 }
 
-strong, b {
+strong,
+b {
     font-weight: 700;
 }
 
@@ -627,15 +628,21 @@ h3 {
 }
 
 #schedule-table-container {
-    max-height: 324px; /* exactly 4 rows: 4×72px + 3×12px gap */
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    max-height: 324px;
+    /* displays multiple rows of cards cleanly */
     overflow-y: auto;
     padding-right: 5px;
     margin-bottom: 20px;
     scrollbar-width: thin;
     scrollbar-color: #cbd5e1 transparent;
+    align-items: stretch;
 }
 
 .empty-state {
+    width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -644,19 +651,22 @@ h3 {
     text-align: center;
     color: var(--admin-text-light);
     background: white;
-    border-radius: 0;
+    border-radius: 6px;
     border: 1px dashed #cbd5e1;
 }
 
 .schedule-row {
-    display: flex;
-    gap: 20px;
+    display: inline-flex;
+    flex: 1 1 auto;
+    min-width: max-content;
+    max-width: 100%;
+    gap: 12px;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 0;
     background: white;
-    padding: 16px 20px;
+    padding: 10px 14px;
     border: 1px solid #e2e8f0;
-    border-radius: 0;
+    border-radius: 6px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
     transition: all 0.2s ease;
     position: relative;
@@ -676,7 +686,7 @@ h3 {
 
 .schedule-row:hover {
     border-color: #cbd5e1;
-    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 .schedule-row:hover::before {
@@ -686,18 +696,18 @@ h3 {
 .schedule-time-wrap {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .schedule-row input[type="time"] {
-    padding: 8px 12px;
+    padding: 6px 10px;
     border: 1px solid #cbd5e1;
-    border-radius: 0;
-    font-size: 1.1rem;
+    border-radius: 4px;
+    font-size: 1.05rem;
     font-weight: 700;
     color: var(--admin-primary);
     background: #f8fafc;
-    width: 130px;
+    width: 110px;
     text-align: center;
     transition: all 0.2s;
 }
@@ -710,10 +720,10 @@ h3 {
 }
 
 .schedule-tags-wrap {
-    flex: 1;
-    display: flex;
-    gap: 10px;
+    display: inline-flex;
+    gap: 6px;
     flex-wrap: wrap;
+    align-items: center;
 }
 
 .variant-tag {
@@ -721,7 +731,6 @@ h3 {
     align-items: center;
     cursor: pointer;
     user-select: none;
-    border-radius: 50000px;
 }
 
 .variant-tag input {
@@ -729,12 +738,11 @@ h3 {
 }
 
 .variant-tag span {
-    padding: 6px 14px;
+    padding: 4px 10px;
     background: #f1f5f9;
     color: #64748b;
     border: 1px solid #e2e8f0;
-    border-radius: 0;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     font-weight: 600;
     transition: all 0.2s;
     border-radius: 50000px;
@@ -752,23 +760,21 @@ h3 {
     box-shadow: 0 2px 4px rgba(11, 31, 56, 0.15);
 }
 
-
-
 .schedule-row .rm-row {
     margin-left: auto;
     background: #fff5f5;
     color: #ef4444;
     border: 1px solid #fee2e2;
-    padding: 10px 18px;
-    display: flex;
+    padding: 6px 10px;
+    display: inline-flex;
     align-items: center;
-    gap: 8px;
-    font-size: 0.85rem;
+    gap: 4px;
+    font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     transition: all 0.2s;
-    border-radius: 0;
+    border-radius: 4px;
 }
 
 .schedule-row .rm-row:hover {
@@ -974,6 +980,7 @@ h3 {
     flex-direction: column-reverse;
     gap: 10px;
     transition: bottom 0.3s ease;
+    pointer-events: none;
 }
 
 /* Unsaved changes badge & inputs */
@@ -1057,6 +1064,7 @@ h3 {
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     animation: slideIn 0.3s ease-out;
     font-weight: 500;
+    pointer-events: auto;
 }
 
 .toast.error {
@@ -1198,7 +1206,8 @@ h3 {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(5, 11, 20, 0.4); /* Fallback */
+    background-color: rgba(5, 11, 20, 0.4);
+    /* Fallback */
     background-color: color-mix(in srgb, var(--admin-primary, #050b14) 40%, transparent);
     backdrop-filter: blur(8px);
     align-items: center;
