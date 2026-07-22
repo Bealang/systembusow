@@ -63,11 +63,23 @@
             <div id="notification-container"></div>
 
             <div class="welcome-section"
-                style="margin-bottom: 40px; background: white; padding: 30px; border-radius: var(--radius-box); border: 1px solid var(--admin-border); box-shadow: var(--shadow-soft);">
-                <h1 style="color: var(--admin-primary); font-weight: 800; font-size: 2.2rem; margin: 0 0 10px 0;">Witaj
-                    z powrotem!</h1>
-                <p style="color: #64748b; margin: 0; font-size: 1.1rem;">Zarządzaj serwisem TwojaNazwa z poziomu tego
-                    panelu.</p>
+                style="margin-bottom: 40px; background: white; padding: 30px; border-radius: var(--radius-box); border: 1px solid var(--admin-border); box-shadow: var(--shadow-soft); display: flex; justify-content: space-between; align-items: center; gap: 20px;">
+                <div>
+                    <h1 style="color: var(--admin-primary); font-weight: 800; font-size: 2.2rem; margin: 0 0 8px 0;">
+                        Witaj z powrotem<% if (typeof user !== 'undefined' && user && user.username) { %>, <span style="color: #2563eb;"><%= user.username %></span><% } %>!
+                    </h1>
+                    <p style="color: #64748b; margin: 0; font-size: 1.05rem;">Zarządzaj serwisem TwojaNazwa z poziomu tego panelu.</p>
+                </div>
+                <div>
+                    <a href="/admin/konto" title="Moje Konto" aria-label="Moje Konto"
+                        style="display: flex; align-items: center; justify-content: center; width: 54px; height: 54px; background-color: #1e293b; color: #ffffff; border-radius: 50%; text-decoration: none; box-shadow: 0 4px 12px rgba(30, 41, 59, 0.25); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </a>
+                </div>
             </div>
 
             <h2 style="margin-bottom: 25px; font-weight: 800; color: var(--admin-primary);">Szybka nawigacja</h2>

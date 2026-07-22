@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TwojaNazwa - Moje Konto</title>
+    <link rel="shortcut icon" href="/favicon.jpg" type="image/jpeg">
+    <link rel="icon" href="/favicon.jpg" type="image/jpeg">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/admin.css">
+</head>
+
+<body>
+    <%- include('partials/sidebar', { activePage: 'konto' }) %>
+
+    <div class="admin-container admin-main-area" id="admin-panel" style="display: block !important;">
+        <div id="notification-container"></div>
+
+        <div id="tab-konto" class="tab-content active">
+            <div style="display: flex; flex-direction: column; gap: 30px; max-width: 850px; margin: 0 auto; width: 100%;">
+                
+                <!-- Informacje o koncie -->
+                <div style="background: white; padding: 24px; border-radius: var(--radius-box); border: 1px solid var(--admin-border); box-shadow: var(--shadow-soft);">
+                    <h3 style="margin-bottom: 8px;">Ustawienia Konta</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 20px;">
+                        Zarządzaj swoimi danymi logowania i ustawieniami bezpieczeństwa.
+                    </p>
+                    <div style="display: flex; gap: 20px; flex-wrap: wrap; background: #f8fafc; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <div>
+                            <span style="display: block; font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: 600;">Nazwa użytkownika</span>
+                            <span id="account-username-display" style="font-size: 1.1rem; font-weight: 700; color: #1e293b;">Ładowanie...</span>
+                        </div>
+                        <div style="border-left: 2px solid #cbd5e1; padding-left: 20px;">
+                            <span style="display: block; font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: 600;">Adres E-mail</span>
+                            <span id="account-email-display" style="font-size: 1.1rem; font-weight: 700; color: #1e293b;">Ładowanie...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formularz 1: Zmiana Nazwy Użytkownika -->
+                <div style="background: white; padding: 24px; border-radius: var(--radius-box); border: 1px solid var(--admin-border); box-shadow: var(--shadow-soft);">
+                    <h3>Zmiana nazwy użytkownika</h3>
+                    <p style="margin-bottom: 20px; color: var(--text-secondary); font-size: 0.9rem;">
+                        Po złożeniu wniosku na Twój aktualny adres e-mail zostanie wysłany link potwierdzający zmianę nazwy użytkownika.
+                    </p>
+                    <form id="form-change-username">
+                        <div class="form-group">
+                            <label for="new-username-input">Nowa nazwa użytkownika</label>
+                            <input type="text" id="new-username-input" placeholder="np. user123" required style="padding: 12px; border: 1.5px solid var(--admin-border); background: #f8fafc;">
+                        </div>
+                        <div class="form-group">
+                            <label for="username-confirm-password">Aktualne hasło</label>
+                            <input type="password" id="username-confirm-password" placeholder="Wpisz obecne hasło" required style="padding: 12px; border: 1.5px solid var(--admin-border); background: #f8fafc;">
+                        </div>
+                        <button type="submit" class="btn-primary" style="padding: 12px 24px;">Zmień nazwę użytkownika</button>
+                    </form>
+                </div>
+
+                <!-- Formularz 2: Zmiana Hasła -->
+                <div style="background: white; padding: 24px; border-radius: var(--radius-box); border: 1px solid var(--admin-border); box-shadow: var(--shadow-soft);">
+                    <h3>Zmiana hasła</h3>
+                    <form id="form-change-password">
+                        <div class="form-group">
+                            <label for="pwd-current">Aktualne hasło</label>
+                            <input type="password" id="pwd-current" placeholder="Wpisz obecne hasło" required style="padding: 12px; border: 1.5px solid var(--admin-border); background: #f8fafc;">
+                        </div>
+                        <div class="form-group">
+                            <label for="pwd-new">Nowe hasło</label>
+                            <input type="password" id="pwd-new" placeholder="Min. 8 znaków" required minlength="8" style="padding: 12px; border: 1.5px solid var(--admin-border); background: #f8fafc;">
+                        </div>
+                        <div class="form-group">
+                            <label for="pwd-confirm">Powtórz nowe hasło</label>
+                            <input type="password" id="pwd-confirm" placeholder="Powtórz nowe hasło" required minlength="8" style="padding: 12px; border: 1.5px solid var(--admin-border); background: #f8fafc;">
+                        </div>
+                        <button type="submit" class="btn-primary" style="padding: 12px 24px;">Zmień hasło</button>
+                    </form>
+                </div>
+
+                <!-- Formularz 3: Zmiana / Reset Adresu E-mail -->
+                <div style="background: white; padding: 24px; border-radius: var(--radius-box); border: 1px solid var(--admin-border); box-shadow: var(--shadow-soft);">
+                    <h3>Zmiana adresu e-mail</h3>
+                    <form id="form-change-email">
+                        <div class="form-group">
+                            <label for="email-new">Nowy adres e-mail</label>
+                            <input type="email" id="email-new" placeholder="np. nowy-email@domena.pl" required style="padding: 12px; border: 1.5px solid var(--admin-border); background: #f8fafc;">
+                        </div>
+                        <div class="form-group">
+                            <label for="email-confirm-password">Aktualne hasło</label>
+                            <input type="password" id="email-confirm-password" placeholder="Wpisz obecne hasło" required style="padding: 12px; border: 1.5px solid var(--admin-border); background: #f8fafc;">
+                        </div>
+                        <button type="submit" class="btn-primary" style="padding: 12px 24px;">Wyślij e-mail z potwierdzeniem</button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/js/admin/konto.js?v=<%= Date.now() %>"></script>
+</body>
+
+</html>

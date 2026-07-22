@@ -46,6 +46,24 @@ db.exec(`
         answer TEXT,
         sort_order INTEGER DEFAULT 0
     );
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT UNIQUE NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+    CREATE TABLE IF NOT EXISTS auth_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        token_hash TEXT UNIQUE NOT NULL,
+        type TEXT NOT NULL,
+        payload TEXT,
+        expires_at TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
 `);
 
 // Migration: ensure sort_order column exists in stops
@@ -56,6 +74,22 @@ try {
         db.prepare("ALTER TABLE stops ADD COLUMN sort_order INTEGER DEFAULT 0").run();
         console.log("Dodano brakującą kolumnę 'sort_order' do tabeli 'stops'.");
     }
+}
+
+// Seed default admin if no users exist
+try {
+    const userCount = db.prepare("SELECT COUNT(*) AS count FROM users").get().count;
+    if (userCount === 0) {
+        const defaultUser = config.admin.user || 'ostafinbodzio';
+        const defaultEmail = process.env.ADMIN_EMAIL || 'admin@twojadomena.pl';
+        const defaultHash = config.admin.hash;
+        if (defaultHash) {
+            db.prepare("INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)").run(defaultUser, defaultEmail, defaultHash);
+            console.log(`[DB Migration] Inicjalizacja konta admina (${defaultUser} / ${defaultEmail}).`);
+        }
+    }
+} catch (err) {
+    console.error("Błąd podczas inicjalizacji użytkowników:", err);
 }
 
 module.exports = db;

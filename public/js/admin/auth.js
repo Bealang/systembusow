@@ -1,64 +1,117 @@
-import { initNews } from './news.js';
-import { initSchedule } from './schedule.js';
-import { initPricing } from './pricing.js';
-import { initFaq } from './faq.js';
-import { initAttributes } from './attributes.js';
-import { initAlert } from './alert.js';
-
-export async function checkAuth() {
-    try {
-        const res = await fetch('/api/check-auth');
-        const data = await res.json();
-        if (data.authenticated) {
-            document.getElementById('login-screen').style.display = 'none';
-            document.getElementById('admin-header-main').style.display = 'block';
-            document.getElementById('admin-panel').style.display = 'block';
-            initNews();
-            initSchedule();
-            initPricing();
-            initFaq();
-            initAttributes();
-            initAlert();
-        } else {
-            document.getElementById('login-screen').style.display = 'flex';
-            document.getElementById('admin-header-main').style.display = 'none';
-            document.getElementById('admin-panel').style.display = 'none';
+function setButtonLoading(button, isLoading, loadingText = 'Wysyłanie...') {
+    if (!button) return;
+    if (isLoading) {
+        if (!button.dataset.originalText) {
+            button.dataset.originalText = button.innerHTML;
         }
-    } catch (e) {
-        console.error("Nie zalogowano", e);
+        button.disabled = true;
+        button.classList.add('btn-loading');
+        button.innerHTML = `<span class="btn-spinner"></span>${loadingText}`;
+    } else {
+        button.disabled = false;
+        button.classList.remove('btn-loading');
+        if (button.dataset.originalText) {
+            button.innerHTML = button.dataset.originalText;
+        }
     }
 }
 
 export function initLoginForm() {
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
+    const loginForm = document.getElementById('login-form');
+    const forgotForm = document.getElementById('forgot-form');
+    const btnShowForgot = document.getElementById('btn-show-forgot');
+    const btnHideForgot = document.getElementById('btn-hide-forgot');
+    const alertEl = document.getElementById('login-alert');
 
-        try {
-            const res = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await res.json();
+    if (btnShowForgot) {
+        btnShowForgot.addEventListener('click', () => {
+            loginForm.style.display = 'none';
+            forgotForm.style.display = 'block';
+            if (alertEl) alertEl.style.display = 'none';
+        });
+    }
 
-            if (data.success) {
-                window.location.href = '/admin';
-            } else {
-                const alertEl = document.getElementById('login-alert');
-                alertEl.textContent = data.message;
-                alertEl.className = 'alert error';
+    if (btnHideForgot) {
+        btnHideForgot.addEventListener('click', () => {
+            forgotForm.style.display = 'none';
+            loginForm.style.display = 'block';
+            if (alertEl) alertEl.style.display = 'none';
+        });
+    }
+
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = loginForm.querySelector('button[type="submit"]');
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            setButtonLoading(btn, true, 'Logowanie...');
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    window.location.href = '/admin';
+                } else {
+                    if (alertEl) {
+                        alertEl.textContent = data.message;
+                        alertEl.className = 'alert error';
+                        alertEl.style.display = 'block';
+                    }
+                    setButtonLoading(btn, false);
+                }
+            } catch (err) {
+                console.error("Błąd logowania", err);
+                setButtonLoading(btn, false);
             }
-        } catch (err) {
-            console.error("Blad logowania", err);
-        }
-    });
+        });
+    }
+
+    if (forgotForm) {
+        forgotForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = forgotForm.querySelector('button[type="submit"]');
+            const email = document.getElementById('forgot-email').value;
+
+            setButtonLoading(btn, true, 'Wysyłanie e-maila...');
+
+            try {
+                const res = await fetch('/api/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+
+                if (alertEl) {
+                    alertEl.textContent = data.message;
+                    alertEl.className = data.success ? 'alert success' : 'alert error';
+                    alertEl.style.display = 'block';
+                }
+                forgotForm.reset();
+                forgotForm.style.display = 'none';
+                loginForm.style.display = 'block';
+            } catch (err) {
+                console.error("Błąd resetowania hasła", err);
+            } finally {
+                setButtonLoading(btn, false);
+            }
+        });
+    }
 }
 
 export function initLogout() {
-    document.getElementById('logout-btn-header').addEventListener('click', async () => {
-        await fetch('/api/logout');
-        window.location.href = '/';
-    });
+    const btnLogout = document.getElementById('logout-btn-header');
+    if (btnLogout) {
+        btnLogout.addEventListener('click', async () => {
+            await fetch('/api/logout');
+            window.location.href = '/';
+        });
+    }
 }

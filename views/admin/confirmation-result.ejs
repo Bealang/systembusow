@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TwojaNazwa - <%= title %></title>
+    <link rel="shortcut icon" href="/favicon.jpg" type="image/jpeg">
+    <link rel="icon" href="/favicon.jpg" type="image/jpeg">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/admin.css">
+</head>
+
+<body>
+    <div class="login-screen-wrapper" style="display: flex !important;">
+        <div class="login-card" style="max-width: 460px; text-align: center;">
+            <div class="login-logo">
+                <h1><%= title %></h1>
+            </div>
+
+            <div class="alert <%= status === 'success' ? 'alert-success' : 'alert-danger' %>" style="display: block; margin-bottom: 25px;">
+                <%= message %>
+            </div>
+
+            <div>
+                <a href="/admin/konto" class="btn-primary" style="display: inline-block; padding: 12px 24px; text-decoration: none; border-radius: 0;">Przejdź do konta</a>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

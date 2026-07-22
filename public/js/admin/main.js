@@ -7,6 +7,7 @@ import { initPricing, initQuickBulkPrice } from './pricing.js?v=1.0.1';
 import { initFaq } from './faq.js?v=1.0.1';
 import { initAttributes } from './attributes.js?v=1.0.1';
 import { initAlert } from './alert.js?v=1.0.1';
+import { initAccount } from './account.js?v=1.0.1';
 
 document.addEventListener('DOMContentLoaded', () => {
     // Shared elements
@@ -64,5 +65,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('faq-form')) {
         initFaq();
     }
-});
 
+    // Account page
+    if (document.getElementById('tab-konto') || document.getElementById('form-change-username')) {
+        initAccount();
+    }
+});

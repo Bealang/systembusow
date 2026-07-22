@@ -67,31 +67,35 @@ function renderFaqList() {
         container.appendChild(div);
     });
 
-    new Sortable(container, {
-        animation: 150,
-        handle: '.faq-admin-drag',
-        ghostClass: 'sortable-ghost',
-        chosenClass: 'sortable-chosen',
-        dragClass: 'sortable-drag',
-        onEnd: async function () {
-            const items = container.querySelectorAll('.faq-admin-item');
-            const orders = Array.from(items).map((item, index) => ({
-                id: parseInt(item.dataset.id),
-                sort_order: index
-            }));
-            try {
-                await fetch('/api/admin/faq/reorder', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orders })
-                });
-                localStorage.removeItem('pytania');
-                showStatus('Kolejność FAQ została zapisana.', 'success');
-            } catch (e) {
-                showStatus('Błąd połączenia przy zapisywaniu kolejności FAQ.', 'error');
+    if (typeof Sortable !== 'undefined') {
+        new Sortable(container, {
+            animation: 150,
+            handle: '.faq-admin-drag',
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            dragClass: 'sortable-drag',
+            onEnd: async function () {
+                const faqIds = Array.from(container.children).map(el => parseInt(el.dataset.id, 10));
+                try {
+                    const res = await fetch('/api/faq/reorder', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ faqIds })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        state.faq = data.faq;
+                        showStatus('Kolejność pytań FAQ została zapisana');
+                    } else {
+                        showStatus(data.error || 'Błąd zapisu kolejności', 'error');
+                    }
+                } catch (err) {
+                    console.error('Błąd reorder FAQ:', err);
+                    showStatus('Błąd połączenia z serwerem', 'error');
+                }
             }
-        }
-    });
+        });
+    }
 }
 
 function resetFaqForm() {

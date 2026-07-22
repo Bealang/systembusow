@@ -566,6 +566,36 @@ export function initPricing() {
                 return;
             }
 
+            if (typeof Sortable !== 'undefined') {
+                new Sortable(container, {
+                    animation: 150,
+                    handle: '.drag-handle',
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    dragClass: 'sortable-drag',
+                    onEnd: async function () {
+                        const stopIds = Array.from(container.children).map(el => parseInt(el.dataset.id, 10));
+                        try {
+                            const res = await fetch('/api/stops/reorder', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ stopIds })
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                                state.stops = data.stops;
+                                showStatus('Kolejność przystanków zapisana');
+                            } else {
+                                showStatus(data.error || 'Błąd zapisu kolejności', 'error');
+                            }
+                        } catch (err) {
+                            console.error('Błąd reorder:', err);
+                            showStatus('Błąd połączenia z serwerem', 'error');
+                        }
+                    }
+                });
+            }
+
             try {
                 const res = await fetch('/api/admin/pricing', {
                     method: 'POST',

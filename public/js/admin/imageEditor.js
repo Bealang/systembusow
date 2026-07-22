@@ -179,6 +179,7 @@ function initImageResizer() {
 
 export function initImageEditor() {
     if (!document.getElementById('news-editor')) return;
+    if (typeof Quill === 'undefined') return;
     // Register custom Image blot
     const ImageBlot = Quill.import('formats/image');
     class CustomImageBlot extends ImageBlot {
