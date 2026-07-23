@@ -1,5 +1,5 @@
 import state from './state.js';
-import { showStatus } from './ui.js';
+import { showStatus, setButtonLoading } from './ui.js';
 
 let containerSchedule, btnAddRow, btnSaveSchedule;
 
@@ -322,6 +322,8 @@ export function initSchedule() {
         // Hide badge optimistically
         showBadge(false);
 
+        setButtonLoading(btnSaveSchedule, true, 'Proszę czekać...');
+
         try {
             const res = await fetch('/api/admin/schedule', {
                 method: 'POST',
@@ -341,6 +343,8 @@ export function initSchedule() {
         } catch (err) {
             showStatus('Błąd sieci/Zapisywania', 'error');
             checkUnsavedChanges();
+        } finally {
+            setButtonLoading(btnSaveSchedule, false);
         }
     });
 }

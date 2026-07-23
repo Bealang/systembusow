@@ -62,7 +62,7 @@ async function loadAttributesData() {
             renderScheduleTable(citySelect.value, daySelect.value);
         }
     } catch (e) {
-        console.error("Nie wczytano atrybutów:", e);
+        console.error("Nie wczytano oznaczeń:", e);
     }
 }
 

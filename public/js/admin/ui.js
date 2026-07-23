@@ -46,6 +46,23 @@ export function showBadge(visible) {
         notifContainer.style.bottom = visible ? '80px' : '20px';
     }
 }
+export function setButtonLoading(button, isLoading, loadingText = 'Proszę czekać...') {
+    if (!button) return;
+    if (isLoading) {
+        if (!button.dataset.originalText) {
+            button.dataset.originalText = button.innerHTML;
+        }
+        button.disabled = true;
+        button.classList.add('btn-loading');
+        button.innerHTML = `<span class="btn-spinner"></span>${loadingText}`;
+    } else {
+        button.disabled = false;
+        button.classList.remove('btn-loading');
+        if (button.dataset.originalText) {
+            button.innerHTML = button.dataset.originalText;
+        }
+    }
+}
 
 
 export function initTabs() {

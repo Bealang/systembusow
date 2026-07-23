@@ -71,7 +71,9 @@ router.post('/api/admin/upload-news-image', requireAuth, imageUpload.single('ima
     }
 
     try {
-        const ext = path.extname(req.file.originalname).toLowerCase() || '.webp';
+        const allowedExts = ['.png', '.jpg', '.jpeg', '.webp', '.avif'];
+        const rawExt = path.extname(req.file.originalname).toLowerCase();
+        const ext = allowedExts.includes(rawExt) ? rawExt : '.webp';
         const fileName = `news-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
         const filePath = path.join(config.paths.uploads, fileName);
 

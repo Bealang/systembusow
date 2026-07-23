@@ -1,22 +1,4 @@
-import { showStatus } from './ui.js';
-
-function setButtonLoading(button, isLoading, loadingText = 'Wysyłanie...') {
-    if (!button) return;
-    if (isLoading) {
-        if (!button.dataset.originalText) {
-            button.dataset.originalText = button.innerHTML;
-        }
-        button.disabled = true;
-        button.classList.add('btn-loading');
-        button.innerHTML = `<span class="btn-spinner"></span>${loadingText}`;
-    } else {
-        button.disabled = false;
-        button.classList.remove('btn-loading');
-        if (button.dataset.originalText) {
-            button.innerHTML = button.dataset.originalText;
-        }
-    }
-}
+import { showStatus, setButtonLoading } from './ui.js';
 
 export async function loadAccountData() {
     try {
@@ -47,7 +29,7 @@ export function initAccount() {
             const newUsername = document.getElementById('new-username-input').value;
             const currentPassword = document.getElementById('username-confirm-password').value;
 
-            setButtonLoading(btn, true, 'Wysyłanie wniosku...');
+            setButtonLoading(btn, true, 'Proszę czekać...');
 
             try {
                 const res = await fetch('/api/account/request-username-change', {
@@ -82,7 +64,7 @@ export function initAccount() {
             const newPassword = document.getElementById('pwd-new').value;
             const confirmPassword = document.getElementById('pwd-confirm').value;
 
-            setButtonLoading(btn, true, 'Zmieniam hasło...');
+            setButtonLoading(btn, true, 'Proszę czekać...');
 
             try {
                 const res = await fetch('/api/account/change-password', {
@@ -116,7 +98,7 @@ export function initAccount() {
             const newEmail = document.getElementById('email-new').value;
             const currentPassword = document.getElementById('email-confirm-password').value;
 
-            setButtonLoading(btn, true, 'Wysyłanie e-maila...');
+            setButtonLoading(btn, true, 'Proszę czekać...');
 
             try {
                 const res = await fetch('/api/account/request-email-change', {

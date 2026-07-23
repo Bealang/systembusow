@@ -12,7 +12,10 @@ const app = express();
 
 // Security & compression
 app.use(compression());
-app.use(helmet({ contentSecurityPolicy: false }));
+app.use(helmet({
+    contentSecurityPolicy: false,
+    crossOriginResourcePolicy: false
+}));
 
 // Body parsers
 app.use(express.json());

@@ -1,20 +1,4 @@
-function setButtonLoading(button, isLoading, loadingText = 'Wysyłanie...') {
-    if (!button) return;
-    if (isLoading) {
-        if (!button.dataset.originalText) {
-            button.dataset.originalText = button.innerHTML;
-        }
-        button.disabled = true;
-        button.classList.add('btn-loading');
-        button.innerHTML = `<span class="btn-spinner"></span>${loadingText}`;
-    } else {
-        button.disabled = false;
-        button.classList.remove('btn-loading');
-        if (button.dataset.originalText) {
-            button.innerHTML = button.dataset.originalText;
-        }
-    }
-}
+import { setButtonLoading } from './ui.js';
 
 export function initLoginForm() {
     const loginForm = document.getElementById('login-form');
@@ -57,7 +41,7 @@ export function initLoginForm() {
                 const data = await res.json();
 
                 if (data.success) {
-                    window.location.href = '/admin';
+                    window.location.href = '/panel-zarzadzania';
                 } else {
                     if (alertEl) {
                         alertEl.textContent = data.message;

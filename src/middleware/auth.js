@@ -10,7 +10,7 @@ function requireAdminView(req, res, next) {
     if (req.session.isAdmin) {
         next();
     } else {
-        res.redirect('/admin');
+        res.redirect('/panel-zarzadzania');
     }
 }
 

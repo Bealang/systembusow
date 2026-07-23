@@ -35,14 +35,13 @@ router.get('/api/account', requireAuth, (req, res) => {
 
 // POST Login
 router.post('/api/login', loginLimiter, (req, res) => {
-    if (!req.session.canAccessLogin) {
-        return res.status(403).json({ success: false, message: 'Brak autoryzacji do logowania.' });
-    }
-
     const { username, password } = req.body;
     if (!username || !password) {
         return res.status(400).json({ success: false, message: 'Wypełnij wszystkie pola.' });
     }
+
+    // Ensure default superuser exists if database has 0 users
+    userService.ensureDefaultSuperuser();
 
     // Try finding user by username or email
     const user = userService.getUserByUsernameOrEmail(username);
@@ -50,22 +49,6 @@ router.post('/api/login', loginLimiter, (req, res) => {
     if (user && userService.verifyPassword(user, password)) {
         req.session.isAdmin = true;
         req.session.userId = user.id;
-        delete req.session.canAccessLogin;
-        return req.session.save((err) => {
-            if (err) {
-                console.error("Błąd zapisu sesji po logowaniu:", err);
-                return res.status(500).json({ success: false, message: 'Błąd zapisu sesji.' });
-            }
-            res.json({ success: true });
-        });
-    }
-
-    // Fallback for initial config user if DB user not found
-    if (username === config.admin.user && require('bcryptjs').compareSync(password, config.admin.hash)) {
-        const adminUser = userService.getAdminUser();
-        req.session.isAdmin = true;
-        req.session.userId = adminUser ? adminUser.id : 1;
-        delete req.session.canAccessLogin;
         return req.session.save((err) => {
             if (err) {
                 console.error("Błąd zapisu sesji po logowaniu:", err);
@@ -106,7 +89,7 @@ router.post('/api/forgot-password', forgotPasswordLimiter, async (req, res) => {
 
     if (user) {
         const rawToken = userService.createToken(user.id, 'password_reset', {}, 15);
-        const resetLink = `${config.appUrl}/admin/reset-password?token=${rawToken}`;
+        const resetLink = `${config.appUrl}/panel-zarzadzania/reset-password?token=${rawToken}`;
         await mailService.sendPasswordResetEmail(user.email, resetLink);
     }
 
@@ -193,7 +176,7 @@ router.post('/api/account/request-email-change', requireAuth, async (req, res) =
 
     // Generate token
     const rawToken = userService.createToken(user.id, 'email_change', { newEmail: cleanNewEmail }, 30);
-    const confirmLink = `${config.appUrl}/admin/confirm-email?token=${rawToken}`;
+    const confirmLink = `${config.appUrl}/panel-zarzadzania/confirm-email?token=${rawToken}`;
 
     // Send verification to new email
     await mailService.sendEmailChangeVerification(cleanNewEmail, confirmLink);
@@ -225,7 +208,7 @@ router.post('/api/account/request-username-change', requireAuth, async (req, res
     }
 
     const rawToken = userService.createToken(user.id, 'username_change', { newUsername: cleanUsername }, 30);
-    const confirmLink = `${config.appUrl}/admin/confirm-username?token=${rawToken}`;
+    const confirmLink = `${config.appUrl}/panel-zarzadzania/confirm-username?token=${rawToken}`;
 
     await mailService.sendUsernameChangeVerification(user.email, cleanUsername, confirmLink);
 

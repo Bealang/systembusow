@@ -1,5 +1,5 @@
 import state from './state.js';
-import { showStatus, showBadge } from './ui.js';
+import { showStatus, showBadge, setButtonLoading } from './ui.js';
 
 // Snapshot for edit mode (null = add-new mode)
 let newsFormSnapshot = null;
@@ -81,7 +81,14 @@ function renderNewsList(newsList, total = 0) {
         loadMoreBtn.style.marginTop = '15px';
         loadMoreBtn.style.width = '100%';
         loadMoreBtn.textContent = 'Wczytaj więcej';
-        loadMoreBtn.addEventListener('click', () => loadAdminNews(state.currentAdminNewsPage + 1, true));
+        loadMoreBtn.addEventListener('click', async () => {
+            setButtonLoading(loadMoreBtn, true, 'Proszę czekać...');
+            try {
+                await loadAdminNews(state.currentAdminNewsPage + 1, true);
+            } finally {
+                setButtonLoading(loadMoreBtn, false);
+            }
+        });
         listDiv.appendChild(loadMoreBtn);
     }
 
@@ -312,6 +319,7 @@ export function initNews() {
             return;
         }
 
+        setButtonLoading(formBtn, true, 'Proszę czekać...');
         try {
             const url = state.editingNewsId ? `/api/admin/news/${state.editingNewsId}` : '/api/admin/news';
             const method = state.editingNewsId ? 'PUT' : 'POST';
@@ -333,6 +341,8 @@ export function initNews() {
         } catch (err) {
             showStatus('Błąd sieci/serwera podczas publikacji.', 'error');
             console.error("News saving error:", err);
+        } finally {
+            setButtonLoading(formBtn, false);
         }
     });
 }
@@ -354,6 +364,8 @@ export function initQuickNews() {
             return;
         }
 
+        const btn = form.querySelector('button[type="submit"]');
+        setButtonLoading(btn, true, 'Proszę czekać...');
         try {
             const res = await fetch('/api/admin/news', {
                 method: 'POST',
@@ -370,6 +382,8 @@ export function initQuickNews() {
             }
         } catch (err) {
             showStatus('Błąd połączenia podczas publikacji.', 'error');
+        } finally {
+            setButtonLoading(btn, false);
         }
     });
 }

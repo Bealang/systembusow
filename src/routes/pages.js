@@ -73,75 +73,49 @@ router.get('/rozklad', (req, res) => {
 });
 
 router.post('/action/footer-trigger', (req, res) => {
-    const token = crypto.randomBytes(16).toString('hex');
-    req.session.accessSecret = token;
-    req.session.secretExpires = Date.now() + 60000; // 60 sekund na otwarcie strony logowania
-    req.session.save((err) => {
-        if (err) {
-            console.error("Błąd zapisu sesji w footer-trigger:", err);
-        }
-        res.json({ redirectUrl: `/admin?auth=${token}` });
-    });
+    res.json({ redirectUrl: '/panel-zarzadzania' });
 });
 
-router.get('/admin', (req, res) => {
+router.get('/panel-zarzadzania', (req, res) => {
     if (req.session.isAdmin) {
         const userService = require('../services/userService');
         const user = userService.getUserById(req.session.userId) || userService.getAdminUser();
         return res.render('admin/index', { activePage: 'dashboard', user });
     }
 
-    const urlToken = req.query.auth;
-    const sessionToken = req.session.accessSecret;
-    const isExpired = req.session.secretExpires ? (Date.now() > req.session.secretExpires) : true;
-
-    if (urlToken && urlToken === sessionToken && !isExpired) {
-        req.session.accessSecret = null;
-        req.session.secretExpires = null;
-        req.session.canAccessLogin = true;
-        return req.session.save((err) => {
-            if (err) console.error("Błąd zapisu sesji logowania:", err);
-            res.render('admin/login');
-        });
-    }
-
-    if (req.session.canAccessLogin) {
-        return res.render('admin/login');
-    }
-
-    res.status(401).send('Nieprawidłowy token autoryzacyjny.');
+    return res.render('admin/login');
 });
 
-router.get('/admin/cennik', requireAdminView, (req, res) => {
+router.get('/panel-zarzadzania/cennik', requireAdminView, (req, res) => {
     res.render('admin/cennik', { activePage: 'cennik' });
 });
 
-router.get('/admin/rozklad-jazdy', requireAdminView, (req, res) => {
+router.get('/panel-zarzadzania/rozklad-jazdy', requireAdminView, (req, res) => {
     res.render('admin/rozklad-jazdy', { activePage: 'rozklad-jazdy' });
 });
 
-router.get('/admin/regulamin', requireAdminView, (req, res) => {
+router.get('/panel-zarzadzania/regulamin', requireAdminView, (req, res) => {
     res.render('admin/regulamin', { activePage: 'regulamin' });
 });
 
-router.get('/admin/aktualnosci', requireAdminView, (req, res) => {
+router.get('/panel-zarzadzania/aktualnosci', requireAdminView, (req, res) => {
     res.render('admin/aktualnosci', { activePage: 'aktualnosci' });
 });
 
-router.get('/admin/faq', requireAdminView, (req, res) => {
+router.get('/panel-zarzadzania/faq', requireAdminView, (req, res) => {
     res.render('admin/faq', { activePage: 'faq' });
 });
 
-router.get('/admin/konto', requireAdminView, (req, res) => {
+router.get('/panel-zarzadzania/konto', requireAdminView, (req, res) => {
     res.render('admin/konto', { activePage: 'konto' });
 });
 
-router.get('/admin/reset-password', (req, res) => {
+router.get('/panel-zarzadzania/reset-password', (req, res) => {
     const token = req.query.token || '';
     res.render('admin/reset-password', { token });
 });
 
-router.get('/admin/confirm-email', (req, res) => {
+router.get('/panel-zarzadzania/confirm-email', (req, res) => {
     const token = req.query.token || '';
     const userService = require('../services/userService');
     const verification = userService.verifyAndConsumeToken(token, 'email_change');
@@ -162,7 +136,7 @@ router.get('/admin/confirm-email', (req, res) => {
     });
 });
 
-router.get('/admin/confirm-username', (req, res) => {
+router.get('/panel-zarzadzania/confirm-username', (req, res) => {
     const token = req.query.token || '';
     const userService = require('../services/userService');
     const verification = userService.verifyAndConsumeToken(token, 'username_change');

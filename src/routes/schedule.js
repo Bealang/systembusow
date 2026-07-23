@@ -56,7 +56,9 @@ router.post('/api/admin/upload-image', requireAuth, imageUpload.single('rozklad_
     }
 
     try {
-        const ext = path.extname(req.file.originalname).toLowerCase() || '.png';
+        const allowedExts = ['.png', '.jpg', '.jpeg', '.webp', '.avif'];
+        const rawExt = path.extname(req.file.originalname).toLowerCase();
+        const ext = allowedExts.includes(rawExt) ? rawExt : '.png';
 
         // Delete any existing rozklad.* files to prevent duplicates
         await deleteFilesMatching(config.paths.public, 'rozklad.');

@@ -1,5 +1,5 @@
 import state from './state.js';
-import { showStatus, showBadge } from './ui.js';
+import { showStatus, showBadge, setButtonLoading } from './ui.js';
 
 // Snapshot of what was loaded into the form for edit (null = "add new" mode)
 let formSnapshot = null;
@@ -190,33 +190,41 @@ export function initFaq() {
     };
 
     // FAQ form submit
-    document.getElementById('faq-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const question = document.getElementById('faq-question').value.trim();
-        const answer = document.getElementById('faq-answer').value.trim();
-        if (!question || !answer) return;
+    const faqForm = document.getElementById('faq-form');
+    if (faqForm) {
+        faqForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const question = document.getElementById('faq-question').value.trim();
+            const answer = document.getElementById('faq-answer').value.trim();
+            if (!question || !answer) return;
 
-        const url = state.editingFaqId ? `/api/admin/faq/${state.editingFaqId}` : '/api/admin/faq';
-        const method = state.editingFaqId ? 'PUT' : 'POST';
+            const btn = document.getElementById('faq-save-btn');
+            setButtonLoading(btn, true, 'Proszę czekać...');
 
-        try {
-            const res = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question, answer })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                state.allFaqs = data.faqs;
-                localStorage.removeItem('pytania');
-                showStatus(state.editingFaqId ? 'Pytanie FAQ zostało zaktualizowane.' : 'Nowe pytanie FAQ zostało dodane.', 'success');
-                resetFaqForm();
-                renderFaqList();
-            } else {
-                showStatus(data.error || 'Błąd zapisu FAQ.', 'error');
+            const url = state.editingFaqId ? `/api/admin/faq/${state.editingFaqId}` : '/api/admin/faq';
+            const method = state.editingFaqId ? 'PUT' : 'POST';
+
+            try {
+                const res = await fetch(url, {
+                    method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question, answer })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    state.allFaqs = data.faqs;
+                    localStorage.removeItem('pytania');
+                    showStatus(state.editingFaqId ? 'Pytanie FAQ zostało zaktualizowane.' : 'Nowe pytanie FAQ zostało dodane.', 'success');
+                    resetFaqForm();
+                    renderFaqList();
+                } else {
+                    showStatus(data.error || 'Błąd zapisu FAQ.', 'error');
+                }
+            } catch (e) {
+                showStatus('Błąd połączenia przy zapisywaniu FAQ.', 'error');
+            } finally {
+                setButtonLoading(btn, false);
             }
-        } catch (e) {
-            showStatus('Błąd połączenia przy zapisywaniu FAQ.', 'error');
-        }
-    });
+        });
+    }
 }

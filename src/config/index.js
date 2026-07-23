@@ -9,13 +9,6 @@ const config = {
         secret: process.env.SESSION_SECRET,
     },
 
-    admin: {
-        user: process.env.ADMIN_USER || 'ostafinbodzio',
-        hash: (process.env.ADMIN_HASH_B64
-            ? Buffer.from(process.env.ADMIN_HASH_B64, 'base64').toString()
-            : process.env.ADMIN_HASH || '').trim(),
-    },
-
     appUrl: process.env.APP_URL || 'http://localhost:3001',
 
     mail: {
@@ -38,11 +31,6 @@ const config = {
 
 if (!config.session.secret) {
     console.error('FATAL: SESSION_SECRET is not set in .env');
-    process.exit(1);
-}
-
-if (!config.admin.hash) {
-    console.error('FATAL: ADMIN_HASH_B64 (or ADMIN_HASH) is not set in .env');
     process.exit(1);
 }
 

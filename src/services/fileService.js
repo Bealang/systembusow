@@ -29,7 +29,7 @@ async function listFiles(dirPath) {
 async function deleteFilesMatching(dirPath, prefix) {
     const files = await listFiles(dirPath);
     for (const file of files) {
-        if (file.startsWith(prefix)) {
+        if (file.startsWith(prefix) && !file.includes('/') && !file.includes('\\')) {
             await deleteFile(path.join(dirPath, file));
         }
     }

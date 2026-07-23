@@ -1,4 +1,4 @@
-import { showStatus, showBadge } from './ui.js';
+import { showStatus, showBadge, setButtonLoading } from './ui.js';
 
 export async function initAlert() {
     const alertForm = document.getElementById('alert-form');
@@ -43,6 +43,9 @@ export async function initAlert() {
         const text = alertTextInput.value.trim();
         const active = text.length > 0;
 
+        const btn = alertForm.querySelector('button[type="submit"]');
+        setButtonLoading(btn, true, 'Proszę czekać...');
+
         try {
             const res = await fetch('/api/admin/alert', {
                 method: 'POST',
@@ -52,7 +55,7 @@ export async function initAlert() {
 
             const data = await res.json();
             if (res.ok && data.success) {
-                showStatus('Alert został pomyślnie zaktualizowany.', 'success');
+                showStatus('Zaktualizowano alert.', 'success');
                 savedAlertText = text;
                 checkAlertUnsaved();
             } else {
@@ -61,6 +64,8 @@ export async function initAlert() {
         } catch (err) {
             console.error("Error saving alert configuration:", err);
             showStatus('Błąd połączenia przy zapisywaniu alertu.', 'error');
+        } finally {
+            setButtonLoading(btn, false);
         }
     });
 }

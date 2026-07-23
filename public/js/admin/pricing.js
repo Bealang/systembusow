@@ -1,5 +1,5 @@
 import state from './state.js';
-import { showStatus } from './ui.js';
+import { showStatus, setButtonLoading } from './ui.js';
 
 let currentPricingConfig = { multiplier: 40, discounts: [], applyDiscountsToSingle: false };
 let savedPricingConfig = { multiplier: 40, discounts: [], applyDiscountsToSingle: false };
@@ -480,6 +480,8 @@ export function initPricing() {
                 return;
             }
             const applyDiscountsToSingle = singleDiscCheckbox ? singleDiscCheckbox.checked : false;
+            const btn = configForm.querySelector('button[type="submit"]');
+            setButtonLoading(btn, true, 'Proszę czekać...');
             
             try {
                 const res = await fetch('/api/admin/pricing-config', {
@@ -499,6 +501,8 @@ export function initPricing() {
             } catch (e) {
                 showStatus('Błąd połączenia podczas zapisywania konfiguracji.', 'error');
                 console.error("Config save error:", e);
+            } finally {
+                setButtonLoading(btn, false);
             }
         });
     }
@@ -515,6 +519,8 @@ export function initPricing() {
                 showStatus('Wpisz nazwę przystanku przed dodaniem.', 'error');
                 return;
             }
+            const btn = addStopForm.querySelector('button[type="submit"]');
+            setButtonLoading(btn, true, 'Proszę czekać...');
             try {
                 const res = await fetch('/api/admin/stops', {
                     method: 'POST',
@@ -535,6 +541,8 @@ export function initPricing() {
             } catch (e) {
                 showStatus('Błąd połączenia przy dodawaniu przystanku.', 'error');
                 console.error("Add stop error:", e);
+            } finally {
+                setButtonLoading(btn, false);
             }
         });
     }
@@ -566,36 +574,7 @@ export function initPricing() {
                 return;
             }
 
-            if (typeof Sortable !== 'undefined') {
-                new Sortable(container, {
-                    animation: 150,
-                    handle: '.drag-handle',
-                    ghostClass: 'sortable-ghost',
-                    chosenClass: 'sortable-chosen',
-                    dragClass: 'sortable-drag',
-                    onEnd: async function () {
-                        const stopIds = Array.from(container.children).map(el => parseInt(el.dataset.id, 10));
-                        try {
-                            const res = await fetch('/api/stops/reorder', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ stopIds })
-                            });
-                            const data = await res.json();
-                            if (data.success) {
-                                state.stops = data.stops;
-                                showStatus('Kolejność przystanków zapisana');
-                            } else {
-                                showStatus(data.error || 'Błąd zapisu kolejności', 'error');
-                            }
-                        } catch (err) {
-                            console.error('Błąd reorder:', err);
-                            showStatus('Błąd połączenia z serwerem', 'error');
-                        }
-                    }
-                });
-            }
-
+            setButtonLoading(savePriceBtn, true, 'Proszę czekać...');
             try {
                 const res = await fetch('/api/admin/pricing', {
                     method: 'POST',
@@ -619,6 +598,8 @@ export function initPricing() {
             } catch (e) {
                 showStatus('Błąd połączenia podczas zapisywania ceny.', 'error');
                 console.error("Price save error:", e);
+            } finally {
+                setButtonLoading(savePriceBtn, false);
             }
         });
     }
@@ -642,6 +623,7 @@ export function initPricing() {
 
             if (!confirm(`Na pewno chcesz ${actionStr} ceny wszystkich biletów ${typeName} o ${absAmount} zł? Zmiana dotknie tylko przystanków, które mają już wprowadzoną cenę.`)) return;
 
+            setButtonLoading(bulkPriceBtn, true, 'Proszę czekać...');
             try {
                 const res = await fetch('/api/admin/pricing/bulk', {
                     method: 'POST',
@@ -678,6 +660,8 @@ export function initPricing() {
             } catch (e) {
                 showStatus(`Błąd podczas masowej zmiany cen: ${e.message}`, 'error');
                 console.error("Bulk price save error:", e);
+            } finally {
+                setButtonLoading(bulkPriceBtn, false);
             }
         });
     }
@@ -702,6 +686,7 @@ export function initQuickBulkPrice() {
 
         if (!confirm(`Na pewno chcesz ${actionStr} ceny biletów jednorazowych o ${absAmount} zł?`)) return;
 
+        setButtonLoading(btn, true, 'Proszę czekać...');
         try {
             const res = await fetch('/api/admin/pricing/bulk', {
                 method: 'POST',
@@ -717,6 +702,8 @@ export function initQuickBulkPrice() {
             }
         } catch (e) {
             showStatus(`Błąd podczas masowej zmiany cen: ${e.message}`, 'error');
+        } finally {
+            setButtonLoading(btn, false);
         }
     });
 }
