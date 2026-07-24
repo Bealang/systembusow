@@ -89,9 +89,9 @@ try {
     if (userCount === 0) {
         const defaultUser = 'admin';
         const defaultEmail = 'admin@twojadomena.pl';
-        const defaultHash = bcrypt.hashSync('admin!#', 12);
+        const defaultHash = bcrypt.hashSync('admin', 12);
         db.prepare("INSERT INTO users (username, email, password_hash) VALUES (?, ?, ?)").run(defaultUser, defaultEmail, defaultHash);
-        console.log(`[DB Migration] Inicjalizacja konta admina (${defaultUser} / ${defaultEmail}) z hasłem admin!#.`);
+        console.log(`[DB Migration] Inicjalizacja konta admina (${defaultUser} / ${defaultEmail}) z hasłem admin.`);
     }
 } catch (err) {
     console.error("Błąd podczas inicjalizacji użytkowników:", err);
