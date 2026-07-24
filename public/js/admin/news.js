@@ -149,7 +149,7 @@ function cancelEditing() {
         if (qlToolbar && qlToolbar.classList.contains('ql-toolbar')) qlToolbar.classList.remove('unsaved-input');
     }
     if (state.quill) state.quill.root.innerHTML = '';
-    if (formBtn) formBtn.textContent = 'Zapisz Publikację';
+    if (formBtn) formBtn.textContent = 'Zapisz';
     if (cancelEditBtn) cancelEditBtn.style.display = 'none';
     showBadge(false);
 }
@@ -257,7 +257,7 @@ export function initNews() {
     cancelEditBtn.style.padding = '15px 30px';
     cancelEditBtn.style.marginLeft = '10px';
     cancelEditBtn.style.display = 'none';
-    cancelEditBtn.textContent = 'Anuluj edycję';
+    cancelEditBtn.textContent = 'Anuluj';
     formBtn.parentNode.insertBefore(cancelEditBtn, formBtn.nextSibling);
     cancelEditBtn.addEventListener('click', cancelEditing);
 
@@ -291,7 +291,7 @@ export function initNews() {
                         content: newsItem.content
                     };
 
-                    if (formBtn) formBtn.textContent = 'Zapisz zmiany (Edycja)';
+                    if (formBtn) formBtn.textContent = 'Zapisz zmiany';
                     if (cancelEditBtn) cancelEditBtn.style.display = 'inline-block';
                     const container = document.querySelector('.admin-container');
                     if (container) container.scrollIntoView({ behavior: 'smooth' });
@@ -311,11 +311,11 @@ export function initNews() {
         const title = titleEl.value;
         const content = state.quill ? state.quill.root.innerHTML : '';
         if (!title || title.trim() === '') {
-            showStatus('Nie można opublikować: Brakuje tytułu aktualności!', 'error');
+            showStatus('Podaj tytuł aktualności', 'error');
             return;
         }
         if (state.quill && state.quill.getText().trim() === '') {
-            showStatus('Nie można opublikować: Treść wiadomości nie może być pusta.', 'error');
+            showStatus('Treść wiadomości nie może być pusta.', 'error');
             return;
         }
 

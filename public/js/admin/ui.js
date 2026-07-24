@@ -88,9 +88,130 @@ export function initTabs() {
 export function initMobileToggle() {
     const mobileToggle = document.getElementById('mobile-toggle');
     const sidebar = document.getElementById('admin-header-main');
-    if (mobileToggle && sidebar) {
-        mobileToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
-        });
+    if (!mobileToggle || !sidebar) return;
+
+    let overlay = document.querySelector('.sidebar-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        document.body.appendChild(overlay);
     }
+
+    function openSidebar() {
+        sidebar.classList.add('open');
+        mobileToggle.classList.add('active');
+        if (overlay) overlay.classList.add('active');
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('open');
+        mobileToggle.classList.remove('active');
+        if (overlay) overlay.classList.remove('active');
+    }
+
+    function toggleSidebar() {
+        const isOpen = sidebar.classList.toggle('open');
+        mobileToggle.classList.toggle('active', isOpen);
+        if (overlay) overlay.classList.toggle('active', isOpen);
+    }
+
+    mobileToggle.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleSidebar();
+    });
+
+    overlay.addEventListener('click', () => {
+        closeSidebar();
+    });
+
+    // Close when clicking links inside sidebar on mobile screens
+    sidebar.querySelectorAll('a, button').forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth <= 992) {
+                closeSidebar();
+            }
+        });
+    });
+
+    // Interactive Drag Tracking for Admin Sidebar (Anywhere on screen)
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isDragging = false;
+    const sidebarWidth = 280; // px width of sidebar
+
+    document.addEventListener('touchstart', (e) => {
+        if (window.innerWidth > 992) return;
+        touchStartX = e.touches[0].clientX;
+        touchStartY = e.touches[0].clientY;
+        isDragging = true;
+    }, { passive: true });
+
+    document.addEventListener('touchmove', (e) => {
+        if (!isDragging || window.innerWidth > 992) return;
+
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        const deltaX = currentX - touchStartX;
+        const deltaY = currentY - touchStartY;
+
+        // Verify gesture is primarily horizontal
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            const isOpen = sidebar.classList.contains('open');
+            sidebar.style.transition = 'none';
+            if (overlay) overlay.style.transition = 'none';
+
+            let currentTranslateX = 0;
+            if (isOpen) {
+                // Dragging left (closing): deltaX is negative
+                currentTranslateX = Math.min(0, Math.max(-sidebarWidth, deltaX));
+            } else {
+                // Dragging right (opening): starting from -sidebarWidth
+                currentTranslateX = Math.min(0, Math.max(-sidebarWidth, -sidebarWidth + deltaX));
+            }
+
+            sidebar.style.transform = `translateX(${currentTranslateX}px)`;
+
+            // Smoothly update overlay opacity based on progress (0 to 1)
+            const progress = (currentTranslateX + sidebarWidth) / sidebarWidth;
+            if (overlay) {
+                overlay.style.opacity = progress * 0.5; // max opacity 0.5
+                overlay.style.pointerEvents = progress > 0.1 ? 'auto' : 'none';
+            }
+        }
+    }, { passive: true });
+
+    document.addEventListener('touchend', (e) => {
+        if (!isDragging || window.innerWidth > 992) return;
+        isDragging = false;
+
+        const touchEndX = e.changedTouches[0].clientX;
+        const deltaX = touchEndX - touchStartX;
+        const isOpen = sidebar.classList.contains('open');
+
+        // Restore CSS transitions
+        sidebar.style.transition = '';
+        sidebar.style.transform = '';
+        if (overlay) {
+            overlay.style.transition = '';
+            overlay.style.opacity = '';
+            overlay.style.pointerEvents = '';
+        }
+
+        // Determine snap action
+        if (isOpen) {
+            // Dragged left significantly -> close
+            if (deltaX < -50) {
+                closeSidebar();
+            } else {
+                openSidebar();
+            }
+        } else {
+            // Dragged right significantly -> open
+            if (deltaX > 50) {
+                openSidebar();
+            } else {
+                closeSidebar();
+            }
+        }
+    }, { passive: true });
 }

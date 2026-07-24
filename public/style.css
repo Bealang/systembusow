@@ -265,6 +265,9 @@ section[id] {
     background-color: var(--primary-color);
     position: sticky;
     top: 0;
+    width: 100%;
+    max-width: 100vw;
+    box-sizing: border-box;
     z-index: 1000;
     box-shadow: var(--shadow-md);
     transition: background-color 0.3s ease, padding 0.3s ease, box-shadow 0.3s ease;
@@ -276,6 +279,8 @@ section[id] {
     top: 0;
     left: 0;
     width: 100%;
+    max-width: 100vw;
+    box-sizing: border-box;
     background-color: transparent;
     box-shadow: none;
     padding: 25px 0;

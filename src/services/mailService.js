@@ -190,10 +190,11 @@ function getEmailWrapper(contentHtml) {
 function maskEmail(email) {
     if (!email || !email.includes('@')) return '***@***';
     const [local, domain] = email.split('@');
-    if (local.length <= 2) {
-        return `${local[0]}***@${domain}`;
+    if (local.length <= 4) {
+        if (local.length <= 2) return `${local[0]}*@${domain}`;
+        return `${local.slice(0, 2)}*${local.slice(-1)}@${domain}`;
     }
-    return `${local[0]}${'*'.repeat(local.length - 2)}${local[local.length - 1]}@${domain}`;
+    return `${local.slice(0, 2)}${'*'.repeat(local.length - 4)}${local.slice(-2)}@${domain}`;
 }
 
 async function sendMail({ to, subject, html }) {

@@ -75,7 +75,7 @@ async function processAndUploadImage(file) {
         }, 50);
 
         quill.setSelection(range.index + 1, Quill.sources.SILENT);
-        showStatus('Obraz został pomyślnie dodany i zoptymalizowany!', 'success');
+        showStatus('Pomyślnie przetworzono obraz.', 'success');
     } catch (err) {
         console.error('Błąd przetwarzania obrazu:', err);
         showStatus(err.message || 'Błąd przetwarzania obrazu.', 'error');

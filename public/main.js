@@ -311,21 +311,105 @@ document.addEventListener('DOMContentLoaded', () => {
     const navLinks = document.getElementById('nav-links');
 
     if (hamburger && navLinks) {
-        hamburger.addEventListener('click', () => {
-            hamburger.classList.toggle('active');
-            navLinks.classList.toggle('active');
+        const openMenu = () => {
+            hamburger.classList.add('active');
+            navLinks.classList.add('active');
             const navbar = document.querySelector('.navbar');
-            if (navbar) navbar.classList.toggle('menu-open');
+            if (navbar) navbar.classList.add('menu-open');
+        };
+
+        const closeMenu = () => {
+            hamburger.classList.remove('active');
+            navLinks.classList.remove('active');
+            const navbar = document.querySelector('.navbar');
+            if (navbar) navbar.classList.remove('menu-open');
+        };
+
+        hamburger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isActive = hamburger.classList.toggle('active');
+            navLinks.classList.toggle('active', isActive);
+            const navbar = document.querySelector('.navbar');
+            if (navbar) navbar.classList.toggle('menu-open', isActive);
         });
 
         navLinks.querySelectorAll('a').forEach(link => {
             link.addEventListener('click', () => {
-                hamburger.classList.remove('active');
-                navLinks.classList.remove('active');
-                const navbar = document.querySelector('.navbar');
-                if (navbar) navbar.classList.remove('menu-open');
+                closeMenu();
             });
         });
+
+        document.addEventListener('click', (e) => {
+            if (navLinks.classList.contains('active') && !navLinks.contains(e.target) && !hamburger.contains(e.target)) {
+                closeMenu();
+            }
+        });
+
+        // Interactive Drag Tracking for Public Mobile Menu (Anywhere on screen)
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let isDragging = false;
+
+        document.addEventListener('touchstart', (e) => {
+            if (window.innerWidth > 768) return;
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            isDragging = true;
+        }, { passive: true });
+
+        document.addEventListener('touchmove', (e) => {
+            if (!isDragging || window.innerWidth > 768) return;
+
+            const currentX = e.touches[0].clientX;
+            const currentY = e.touches[0].clientY;
+            const deltaX = currentX - touchStartX;
+            const deltaY = currentY - touchStartY;
+            const menuWidth = navLinks.offsetWidth || window.innerWidth;
+
+            if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                const isOpen = navLinks.classList.contains('active');
+                navLinks.style.transition = 'none';
+
+                let currentTranslateX = 0;
+                if (isOpen) {
+                    // Dragging right to close (deltaX > 0)
+                    currentTranslateX = Math.max(0, Math.min(menuWidth, deltaX));
+                } else {
+                    // Dragging left to open (deltaX < 0): starting from menuWidth
+                    currentTranslateX = Math.max(0, Math.min(menuWidth, menuWidth + deltaX));
+                }
+
+                navLinks.style.transform = `translateX(${currentTranslateX}px)`;
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchend', (e) => {
+            if (!isDragging || window.innerWidth > 768) return;
+            isDragging = false;
+
+            const touchEndX = e.changedTouches[0].clientX;
+            const deltaX = touchEndX - touchStartX;
+            const isOpen = navLinks.classList.contains('active');
+
+            navLinks.style.transition = '';
+            navLinks.style.transform = '';
+
+            if (isOpen) {
+                // Dragged right significantly -> close
+                if (deltaX > 50) {
+                    closeMenu();
+                } else {
+                    openMenu();
+                }
+            } else {
+                // Dragged left significantly -> open
+                if (deltaX < -50) {
+                    openMenu();
+                } else {
+                    closeMenu();
+                }
+            }
+        }, { passive: true });
     }
 
     // 5. Smooth Scroll for Anchor Links

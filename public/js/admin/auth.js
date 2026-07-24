@@ -58,10 +58,27 @@ export function initLoginForm() {
     }
 
     if (forgotForm) {
+        let lastForgotData = null;
+        const forgotBtn = forgotForm.querySelector('button[type="submit"]');
+
+        if (forgotBtn) {
+            forgotBtn.addEventListener('click', () => {
+                const emailInput = document.getElementById('forgot-email');
+                if (lastForgotData && !emailInput.value) {
+                    emailInput.value = lastForgotData.email;
+                }
+            });
+        }
+
         forgotForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = forgotForm.querySelector('button[type="submit"]');
-            const email = document.getElementById('forgot-email').value;
+            const btn = forgotBtn || forgotForm.querySelector('button[type="submit"]');
+            const emailInput = document.getElementById('forgot-email');
+            let email = emailInput.value.trim();
+
+            if (!email && lastForgotData) {
+                email = lastForgotData.email;
+            }
 
             setButtonLoading(btn, true, 'Wysyłanie e-maila...');
 
@@ -78,9 +95,12 @@ export function initLoginForm() {
                     alertEl.className = data.success ? 'alert success' : 'alert error';
                     alertEl.style.display = 'block';
                 }
-                forgotForm.reset();
-                forgotForm.style.display = 'none';
-                loginForm.style.display = 'block';
+
+                if (data.success) {
+                    lastForgotData = { email };
+                    forgotForm.reset();
+                    btn.dataset.originalText = 'Wyślij ponownie';
+                }
             } catch (err) {
                 console.error("Błąd resetowania hasła", err);
             } finally {
